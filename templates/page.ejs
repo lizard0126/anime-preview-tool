@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>
+    <%= title %> - 页面
+  </title>
+  <style>
+    @font-face {
+      font-family: 'label';
+      src: url('./assets/fonts/label.ttf') format('truetype');
+
+    }
+
+    @font-face {
+      font-family: 'title';
+      src: url('./assets/fonts/title.ttf') format('truetype');
+
+    }
+
+    body {
+      margin: 0;
+      padding: 40px;
+      width: 800px;
+      font-family: sans-serif;
+      background: #f7f9fc;
+      box-sizing: border-box;
+    }
+
+    .visual-section {
+      display: flex;
+      position: relative;
+      margin-bottom: 40px;
+      padding-bottom: 24px;
+      overflow: visible;
+    }
+
+    .title-box {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .label {
+      font-family: 'label', sans-serif;
+      font-size: 40px;
+      font-weight: bold;
+      background: #def4fd;
+      border-radius: 8px;
+      color: #333333;
+      padding: 4px 12px;
+      display: inline-block;
+      margin-bottom: 24px;
+      transform: skew(-15deg);
+    }
+
+    .title-row {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: row;
+      gap: 4px;
+      line-height: 1;
+    }
+
+    .jp-title,
+    .cn-title {
+      writing-mode: vertical-lr;
+      text-orientation: upright;
+      white-space: normal;
+      font-family: 'title', sans-serif;
+      line-height: 1.5;
+      color: #222;
+    }
+
+    .cn-title {
+      font-weight: bold;
+      font-size: 48px;
+    }
+
+    .jp-title {
+      font-size: 40px;
+      transform: translateY(3em);
+    }
+
+    .visual-container {
+      flex: 1;
+      position: relative;
+      display: flex;
+      justify-content: flex-end;
+      overflow: visible;
+    }
+
+    .visual-image {
+      width: 520px;
+      height: auto;
+      border-radius: 0 0 520px 520px;
+      object-fit: cover;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
+    }
+
+    .comment {
+      display: flex;
+      align-items: flex-start;
+      gap: 24px;
+      margin-bottom: 48px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .comment img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
+    }
+
+    .comment-content {
+      background: #fff;
+      border-radius: 20px;
+      padding: 20px;
+      max-width: calc(100% - 100px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      word-wrap: break-word;
+      box-sizing: border-box;
+    }
+
+    .comment-name {
+      font-weight: bold;
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .comment-text {
+      font-size: 26px;
+      color: #333;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="visual-section">
+    <div class="title-box">
+      <div class="label">新番速递</div>
+      <div class="title-row">
+        <div class="jp-title">
+          <span>
+            <%= title %>
+          </span>
+        </div>
+        <div class="cn-title">
+          <span>
+            <%= subtitle %>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="visual-container">
+      <img class="visual-image" src="./<%= visual %>" alt="视觉图" />
+    </div>
+  </div>
+
+  <% comments.forEach(c=> { %>
+    <div class="comment">
+      <img src="./<%= c.avatar %>" alt="头像" />
+      <div class="comment-content">
+        <div class="comment-name">
+          <%= c.name %>
+        </div>
+        <div class="comment-text">
+          <%= c.text %>
+        </div>
+      </div>
+    </div>
+    <% }) %>
+</body>
+
+</html>
