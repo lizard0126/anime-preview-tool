@@ -12,4 +12,4 @@ echo 正在清理根目录下的 docx 文档...
 del /q ".\*.docx"
 
 echo 清理完成。
-pause
+exit

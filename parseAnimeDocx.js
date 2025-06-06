@@ -9,6 +9,7 @@ const JSON_PATH = path.join(__dirname, 'data.json');
 
 const EXCLUDE_NAMES = new Set([
   '导演',
+  '#1导演',
   '编剧',
   '原案',
   '音乐',
@@ -16,7 +17,7 @@ const EXCLUDE_NAMES = new Set([
   '人设',
   '总作监',
   '动导',
-  
+  '原作',
 ]);
 
 function ensureDir(dir) {
@@ -77,7 +78,7 @@ async function parseDocxToJson(docxPath) {
           if (!EXCLUDE_NAMES.has(trimmedName) && trimmedName && commentText) {
             comments.push({
               name: name.trim(),
-              avatar: `assets/${name.trim()}.png`,
+              avatar: `assets/avatar/${name.trim()}.jpg`,
               text: commentText
             });
           }
