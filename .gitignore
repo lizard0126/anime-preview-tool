@@ -1,5 +1,6 @@
 screenshots/
 output/
 data.json
+*.docx
 
 !assets/fonts
