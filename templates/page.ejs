@@ -11,13 +11,11 @@
     @font-face {
       font-family: 'label';
       src: url('./assets/fonts/label.ttf') format('truetype');
-
     }
 
     @font-face {
       font-family: 'title';
       src: url('./assets/fonts/title.ttf') format('truetype');
-
     }
 
     body {
@@ -25,7 +23,7 @@
       padding: 40px;
       width: 800px;
       font-family: sans-serif;
-      background: #f7f9fc;
+      background: #fffef5;
       box-sizing: border-box;
     }
 
@@ -34,34 +32,39 @@
       position: relative;
       margin-bottom: 40px;
       padding-bottom: 24px;
-      overflow: visible;
+      align-items: flex-start;
     }
 
     .title-box {
       display: flex;
       flex-direction: column;
       align-items: flex-end;
+      flex: 1;
+      position: relative;
+      z-index: 1;
     }
 
     .label {
       font-family: 'label', sans-serif;
       font-size: 40px;
       font-weight: bold;
-      background: #def4fd;
+      background: #ffffff;
       border-radius: 8px;
       color: #333333;
       padding: 4px 12px;
       display: inline-block;
       margin-bottom: 24px;
-      transform: skew(-15deg);
+      transform: skew(-15deg)translateX(-18px);
     }
 
     .title-row {
+      position: relative;
       margin-top: 12px;
       display: flex;
       flex-direction: row;
       gap: 4px;
       line-height: 1;
+      transform: translateX(-20px);
     }
 
     .jp-title,
@@ -76,12 +79,16 @@
 
     .cn-title {
       font-weight: bold;
-      font-size: 48px;
+      font-size: 50px;
+      color: #111;
     }
 
     .jp-title {
-      font-size: 40px;
-      transform: translateY(3em);
+      position: absolute;
+      right: 100%;
+      font-size: 36px;
+      color: #666;
+      transform: translateY(2em);
     }
 
     .visual-container {
@@ -109,13 +116,13 @@
       box-sizing: border-box;
     }
 
-    .comment img {
+    .avatar {
       width: 80px;
       height: 80px;
       border-radius: 50%;
       object-fit: cover;
       flex-shrink: 0;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 1);
     }
 
     .comment-content {
@@ -137,6 +144,18 @@
     .comment-text {
       font-size: 26px;
       color: #333;
+      overflow-wrap: break-word;
+      overflow-x: auto;
+    }
+
+    .comment-text img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin-top: 12px;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      max-height: 300px;
     }
   </style>
 </head>
@@ -147,14 +166,10 @@
       <div class="label">新番速递</div>
       <div class="title-row">
         <div class="jp-title">
-          <span>
-            <%= subtitle %>
-          </span>
+          <%= subtitle %>
         </div>
         <div class="cn-title">
-          <span>
-            <%= title %>
-          </span>
+          <%= title %>
         </div>
       </div>
     </div>
@@ -166,13 +181,13 @@
 
   <% comments.forEach(c=> { %>
     <div class="comment">
-      <img src="./<%= c.avatar %>" alt="头像" />
+      <img class="avatar" src="./<%= c.avatar %>" alt="头像" />
       <div class="comment-content">
         <div class="comment-name">
           <%= c.name %>
         </div>
         <div class="comment-text">
-          <%= c.text %>
+          <%- c.text %>
         </div>
       </div>
     </div>

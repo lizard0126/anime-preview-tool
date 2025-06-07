@@ -8,16 +8,7 @@ const ASSETS_DIR = path.join(OUTPUT_DIR, 'assets', 'visual');
 const JSON_PATH = path.join(__dirname, 'data.json');
 
 const EXCLUDE_NAMES = new Set([
-  '导演',
-  '#1导演',
-  '编剧',
-  '原案',
-  '音乐',
-  '动画制作',
-  '人设',
-  '总作监',
-  '动导',
-  '原作',
+  '导演：', '原案：', '原作：', '动画制作：',
 ]);
 
 function ensureDir(dir) {
@@ -27,7 +18,6 @@ function ensureDir(dir) {
 function saveBase64Image(src, index) {
   const match = src.match(/^data:image\/(\w+);base64,(.+)$/);
   if (!match) return null;
-
   const ext = match[1];
   const base64Data = match[2];
   const filename = `image${index}.${ext}`;
@@ -43,71 +33,140 @@ async function parseDocxToJson(docxPath) {
 
     const { value: html } = await mammoth.convertToHtml({ path: docxPath });
     const $ = cheerio.load(html);
-
     const paragraphs = $('p').toArray();
-    const images = $('img').toArray();
 
     const animeData = [];
-    let imgIdx = 0;
-    let pIdx = 0;
+    const collectedImages = [];
+    let imgCounter = 0;
 
-    while (imgIdx < images.length && pIdx < paragraphs.length) {
-      const imgSrc = $(images[imgIdx]).attr('src');
-      const visual = imgSrc?.startsWith('data:image') ? saveBase64Image(imgSrc, imgIdx) : '';
-      imgIdx++;
-
-      while (pIdx < paragraphs.length && $(paragraphs[pIdx]).find('img').length === 0) {
-        pIdx++;
+    // 收集所有图像
+    paragraphs.forEach(($p, i) => {
+      const img = $(paragraphs[i]).find('img');
+      if (img.length > 0) {
+        const src = img.attr('src');
+        if (src?.startsWith('data:image')) {
+          collectedImages.push({ pIdx: i, src });
+        }
       }
-      pIdx++;
+    });
 
-      const titleCn = $(paragraphs[pIdx])?.text().trim() || '';
-      const titleJp = $(paragraphs[pIdx + 1])?.text().trim() || '';
-      pIdx += 2;
+    let pIdx = 0;
+    while (pIdx < paragraphs.length) {
+      const $cur = $(paragraphs[pIdx]);
+      const text = $cur.text().trim();
+      const isCredit = [...EXCLUDE_NAMES].some(name => text.includes(name));
 
+      if (!isCredit) {
+        pIdx++;
+        continue;
+      }
+
+      // 找视觉图
+      let visual = '';
+      let visualIdx = -1;
+      for (let i = collectedImages.length - 1; i >= 0; i--) {
+        if (collectedImages[i].pIdx < pIdx) {
+          visual = saveBase64Image(collectedImages[i].src, imgCounter++);
+          visualIdx = collectedImages[i].pIdx;
+          collectedImages.splice(i, 1);
+          break;
+        }
+      }
+
+      if (visualIdx === -1) {
+        pIdx++;
+        continue;
+      }
+
+      // 提取标题
+      let titleCn = '', titleJp = '';
+      let titleEnd = visualIdx;
+
+      if (visualIdx + 1 < paragraphs.length) {
+        titleCn = $(paragraphs[visualIdx + 1]).text().trim();
+        titleEnd = visualIdx + 1;
+      }
+      if (visualIdx + 2 < paragraphs.length) {
+        titleJp = $(paragraphs[visualIdx + 2]).text().trim();
+        titleEnd = visualIdx + 2;
+      }
+
+      // 移动到评论开始段落
+      pIdx = titleEnd + 1;
       const comments = [];
+      let currentName = '';
+
+      let creditCount = 0;
       while (pIdx < paragraphs.length) {
-        const text = $(paragraphs[pIdx]).text().trim();
+        const $p = $(paragraphs[pIdx]);
+        const t = $p.text().trim();
+        const isNewCredit = [...EXCLUDE_NAMES].some(name => t.includes(name));
 
-        if ($(paragraphs[pIdx]).find('img').length > 0) break;
+        if (isNewCredit) {
+          creditCount++;
+          if (creditCount >= 2) {
+            if (comments.length > 0) {
+              const lastComment = comments[comments.length - 1];
+              lastComment.text = lastComment.text.replace(/(<img src="[^"]+">)\s*$/, '').trim();
+            }
+            break;
+          } else {
+            pIdx++;
+            continue;
+          }
+        }
 
-        if (text.includes('：')) {
-          const [name, ...rest] = text.split('：');
+        const hasColon = t.includes('：') || t.includes(':');
+        const hasImg = $p.find('img').length > 0;
+
+        if (hasColon) {
+          const [name, ...rest] = t.split(/：|:/);
           const trimmedName = name.trim();
           const commentText = rest.join('：').trim();
-          if (!EXCLUDE_NAMES.has(trimmedName) && trimmedName && commentText) {
+
+          if (trimmedName && !EXCLUDE_NAMES.has(trimmedName)) {
+            currentName = trimmedName;
             comments.push({
-              name: name.trim(),
-              avatar: `assets/avatar/${name.trim()}.jpg`,
-              text: commentText
+              name: trimmedName,
+              avatar: `assets/avatar/${trimmedName}.jpg`,
+              text: commentText,
             });
           }
+        } else if (hasImg && currentName && comments.length > 0) {
+          $p.find('img').each((_, img) => {
+            const src = $(img).attr('src');
+            if (src?.startsWith('data:image')) {
+              const imgPath = saveBase64Image(src, imgCounter++);
+              comments[comments.length - 1].text += ` <img src="${imgPath}">`;
+            }
+          });
         }
 
         pIdx++;
       }
 
-      if (titleCn && titleJp && visual) {
+      if (titleCn) {
         animeData.push({
           title: titleCn,
-          subtitle: titleJp,
+          subtitle: titleJp || '',
           visual,
-          comments
+          comments,
         });
-        console.log(`提取: ${titleCn} / ${titleJp}，评论数：${comments.length}`);
+      } else {
+        console.log(`[跳过] 找不到标题，段落 ${pIdx}`);
       }
     }
 
     fs.writeFileSync(JSON_PATH, JSON.stringify(animeData, null, 2), 'utf-8');
-    console.log(`完成：共提取 ${animeData.length} 部动画`);
-    console.log(`JSON 输出文件：${JSON_PATH}`);
+    console.log(`\n[完成] 共提取 ${animeData.length} 部动画`);
+    console.log(`[输出文件] ${JSON_PATH}`);
   } catch (err) {
     console.error('解析失败:', err);
   }
 }
 
+// 查找最新的 .docx 文件
 const docxFiles = fs.readdirSync(__dirname).filter(file => file.toLowerCase().endsWith('.docx'));
-
 if (docxFiles.length === 0) {
   console.error('未找到任何 .docx 文件，请将文件放入当前目录。');
   process.exit(1);
@@ -116,6 +175,6 @@ if (docxFiles.length === 0) {
 const targetDocx = docxFiles
   .map(f => ({ name: f, mtime: fs.statSync(path.join(__dirname, f)).mtime }))
   .sort((a, b) => b.mtime - a.mtime)[0].name;
-console.log(`检测到文档：${targetDocx}`);
 
+console.log(`检测到文档：${targetDocx}`);
 parseDocxToJson(path.join(__dirname, targetDocx));

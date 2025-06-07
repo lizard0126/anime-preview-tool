@@ -29,7 +29,7 @@
       {
         "name": "小华",
         "avatar": "assets/小华.png",
-        "text": "评论4"
+        "text": "评论4 <img src=\"assets/visual/image.png\">"
       }
     ]
   }
