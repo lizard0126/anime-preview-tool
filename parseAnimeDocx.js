@@ -91,7 +91,7 @@ async function parseDocxToJson(docxPath) {
         titleEnd = visualIdx + 2;
       }
 
-      // 移动到评论开始段落
+      // 处理评论
       pIdx = titleEnd + 1;
       const comments = [];
       let currentName = '';
@@ -107,7 +107,10 @@ async function parseDocxToJson(docxPath) {
           if (creditCount >= 2) {
             if (comments.length > 0) {
               const lastComment = comments[comments.length - 1];
-              lastComment.text = lastComment.text.replace(/(<img src="[^"]+">)\s*$/, '').trim();
+              const lastImgIndex = lastComment.text.lastIndexOf('<img src=');
+              if (lastImgIndex !== -1) {
+                lastComment.text = lastComment.text.substring(0, lastImgIndex).trim();
+              }
             }
             break;
           } else {
@@ -132,14 +135,21 @@ async function parseDocxToJson(docxPath) {
               text: commentText,
             });
           }
-        } else if (hasImg && currentName && comments.length > 0) {
-          $p.find('img').each((_, img) => {
-            const src = $(img).attr('src');
-            if (src?.startsWith('data:image')) {
-              const imgPath = saveBase64Image(src, imgCounter++);
-              comments[comments.length - 1].text += ` <img src="${imgPath}">`;
+        } else {
+          if (currentName && comments.length > 0) {
+            if (t) {
+              comments[comments.length - 1].text += '<br>' + t;
             }
-          });
+            if (hasImg) {
+              $p.find('img').each((_, img) => {
+                const src = $(img).attr('src');
+                if (src?.startsWith('data:image')) {
+                  const imgPath = saveBase64Image(src, imgCounter++);
+                  comments[comments.length - 1].text += ` <img src="${imgPath}">`;
+                }
+              });
+            }
+          }
         }
 
         pIdx++;
