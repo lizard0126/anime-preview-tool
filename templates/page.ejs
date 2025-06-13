@@ -18,6 +18,11 @@
       src: url('./assets/fonts/title.ttf') format('truetype');
     }
 
+    @font-face {
+      font-family: 'footer';
+      src: url('./assets/fonts/footer.TTF') format('truetype');
+    }
+
     body {
       margin: 0;
       padding: 40px;
@@ -81,6 +86,9 @@
       font-weight: bold;
       font-size: 50px;
       color: #111;
+      max-height: 700px;
+      overflow-wrap: break-word;
+      overflow: hidden;
     }
 
     .jp-title {
@@ -89,6 +97,10 @@
       font-size: 36px;
       color: #666;
       transform: translateY(2em);
+      white-space: nowrap;
+      overflow: visible;
+      max-height: none;
+      z-index: 0;
     }
 
     .visual-container {
@@ -114,6 +126,8 @@
       margin-bottom: 48px;
       width: 100%;
       box-sizing: border-box;
+      position: relative;
+      z-index: 1;
     }
 
     .avatar {
@@ -157,6 +171,15 @@
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
       max-height: 300px;
     }
+
+    .footer-credit {
+      font-family: 'footer', sans-serif;
+      text-align: center;
+      margin-top: 40px;
+      font-size: 30px;
+      color: #999;
+      z-index: 1;
+    }
   </style>
 </head>
 
@@ -192,6 +215,8 @@
       </div>
     </div>
     <% }) %>
+
+      <div class="footer-credit">天央动漫社·节操部制作</div>
 </body>
 
 </html>

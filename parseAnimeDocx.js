@@ -39,7 +39,6 @@ async function parseDocxToJson(docxPath) {
     const collectedImages = [];
     let imgCounter = 0;
 
-    // 收集所有图像
     paragraphs.forEach(($p, i) => {
       const img = $(paragraphs[i]).find('img');
       if (img.length > 0) {
@@ -61,7 +60,6 @@ async function parseDocxToJson(docxPath) {
         continue;
       }
 
-      // 找视觉图
       let visual = '';
       let visualIdx = -1;
       for (let i = collectedImages.length - 1; i >= 0; i--) {
@@ -78,7 +76,6 @@ async function parseDocxToJson(docxPath) {
         continue;
       }
 
-      // 提取标题
       let titleCn = '', titleJp = '';
       let titleEnd = visualIdx;
 
@@ -91,7 +88,6 @@ async function parseDocxToJson(docxPath) {
         titleEnd = visualIdx + 2;
       }
 
-      // 处理评论
       pIdx = titleEnd + 1;
       const comments = [];
       let currentName = '';
@@ -119,11 +115,11 @@ async function parseDocxToJson(docxPath) {
           }
         }
 
-        const hasColon = t.includes('：') || t.includes(':');
+        const hasColon = t.includes('：') ;
         const hasImg = $p.find('img').length > 0;
 
         if (hasColon) {
-          const [name, ...rest] = t.split(/：|:/);
+          const [name, ...rest] = t.split(/：/);
           const trimmedName = name.trim();
           const commentText = rest.join('：').trim();
 
@@ -175,7 +171,6 @@ async function parseDocxToJson(docxPath) {
   }
 }
 
-// 查找最新的 .docx 文件
 const docxFiles = fs.readdirSync(__dirname).filter(file => file.toLowerCase().endsWith('.docx'));
 if (docxFiles.length === 0) {
   console.error('未找到任何 .docx 文件，请将文件放入当前目录。');
