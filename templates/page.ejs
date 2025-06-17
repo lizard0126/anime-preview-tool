@@ -20,7 +20,7 @@
 
     @font-face {
       font-family: 'footer';
-      src: url('./assets/fonts/footer.TTF') format('truetype');
+      src: url('./assets/fonts/footer.ttf') format('truetype');
     }
 
     body {
@@ -127,7 +127,7 @@
       width: 100%;
       box-sizing: border-box;
       position: relative;
-      z-index: 1;
+      z-index: 2;
     }
 
     .avatar {
@@ -137,6 +137,15 @@
       object-fit: cover;
       flex-shrink: 0;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 1);
+    }
+
+    .comment-wrapper {
+      background: rgba(255, 255, 237, 0.8);
+      border-radius: 24px;
+      padding: 0;
+      box-sizing: border-box;
+      position: relative;
+      z-index: 1;
     }
 
     .comment-content {
@@ -175,10 +184,10 @@
     .footer-credit {
       font-family: 'footer', sans-serif;
       text-align: center;
-      margin-top: 40px;
+      margin-top: 0;
       font-size: 30px;
       color: #999;
-      z-index: 1;
+      z-index: 2;
     }
   </style>
 </head>
@@ -202,21 +211,23 @@
     </div>
   </div>
 
-  <% comments.forEach(c=> { %>
-    <div class="comment">
-      <img class="avatar" src="./<%= c.avatar %>" alt="头像" />
-      <div class="comment-content">
-        <div class="comment-name">
-          <%= c.name %>
-        </div>
-        <div class="comment-text">
-          <%- c.text %>
+  <div class="comment-wrapper">
+    <% comments.forEach(c=> { %>
+      <div class="comment">
+        <img class="avatar" src="./<%= c.avatar %>" alt="头像" />
+        <div class="comment-content">
+          <div class="comment-name">
+            <%= c.name %>
+          </div>
+          <div class="comment-text">
+            <%- c.text %>
+          </div>
         </div>
       </div>
-    </div>
-    <% }) %>
+      <% }) %>
+  </div>
 
-      <div class="footer-credit">天央动漫社·节操部制作</div>
+  <div class="footer-credit">天央动漫社·节操部制作</div>
 </body>
 
 </html>

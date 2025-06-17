@@ -1,7 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const AVATAR_DIR = path.join(__dirname, 'output', 'assets', 'avatar');
+const ROOT_DIR = path.join(__dirname, '..');
+const AVATAR_DIR = path.join(ROOT_DIR, 'output', 'assets', 'avatar');
 
 const BRACKET_REGEX = /【[^】]+】/;
 
@@ -20,7 +21,7 @@ function copyAvatarFiles() {
     const variants = ['金牌', '银牌', '黑牌'];
 
     variants.forEach((prefix) => {
-      const newName = `【${prefix}】${file}`;
+      const newName = `${base}【${prefix}】${ext}`;
       const destPath = path.join(AVATAR_DIR, newName);
 
       if (!fs.existsSync(destPath)) {

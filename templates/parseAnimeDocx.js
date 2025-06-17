@@ -3,7 +3,8 @@ const cheerio = require('cheerio');
 const fs = require('fs');
 const path = require('path');
 
-const OUTPUT_DIR = path.join(__dirname, 'output');
+const ROOT_DIR = path.join(__dirname, '..');
+const OUTPUT_DIR = path.join(ROOT_DIR, 'output');
 const ASSETS_DIR = path.join(OUTPUT_DIR, 'assets', 'visual');
 const JSON_PATH = path.join(__dirname, 'data.json');
 
@@ -171,15 +172,15 @@ async function parseDocxToJson(docxPath) {
   }
 }
 
-const docxFiles = fs.readdirSync(__dirname).filter(file => file.toLowerCase().endsWith('.docx'));
+const docxFiles = fs.readdirSync(ROOT_DIR).filter(file => file.toLowerCase().endsWith('.docx'));
 if (docxFiles.length === 0) {
   console.error('未找到任何 .docx 文件，请将文件放入当前目录。');
   process.exit(1);
 }
 
 const targetDocx = docxFiles
-  .map(f => ({ name: f, mtime: fs.statSync(path.join(__dirname, f)).mtime }))
+  .map(f => ({ name: f, mtime: fs.statSync(path.join(ROOT_DIR, f)).mtime }))
   .sort((a, b) => b.mtime - a.mtime)[0].name;
 
 console.log(`检测到文档：${targetDocx}`);
-parseDocxToJson(path.join(__dirname, targetDocx));
+parseDocxToJson(path.join(ROOT_DIR, targetDocx));

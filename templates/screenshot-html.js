@@ -1,11 +1,14 @@
 import puppeteer from 'puppeteer-core';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 const CHROME_PATH = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const OUTPUT_DIR = './output';
-const SCREENSHOT_DIR = './screenshots';
+const OUTPUT_DIR = path.join(__dirname, '..', 'output');
+const SCREENSHOT_DIR = path.join(__dirname, '..', 'screenshots');
 
 if (!fs.existsSync(SCREENSHOT_DIR)) {
   fs.mkdirSync(SCREENSHOT_DIR);

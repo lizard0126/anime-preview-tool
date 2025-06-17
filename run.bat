@@ -1,6 +1,6 @@
 @echo off
-cd /d %~dp0
-node parseAnimeDocx.js
-node generate-html.js
-node screenshot-html.js
+node templates/copy-avatars.js
+node templates/parseAnimeDocx.js
+node templates/generate-html.js
+node templates/screenshot-html.js
 exit

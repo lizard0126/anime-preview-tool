@@ -1,6 +1,7 @@
-screenshots/
-output/
+/screenshots/*
+/output/*
 data.json
 *.docx
 
-!assets/fonts
+!output/assets/fonts/
+!output/assets/fonts/*.ttf
