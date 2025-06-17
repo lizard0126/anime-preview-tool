@@ -4,4 +4,3 @@ data.json
 *.docx
 
 !output/assets/fonts/
-!output/assets/fonts/*.ttf
