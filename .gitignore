@@ -1,6 +1,9 @@
-/screenshots/*
-/output/*
+screenshots/
 data.json
 *.docx
 
+output/*
+!output/assets/
+output/assets/*
 !output/assets/fonts/
+!output/assets/fonts/*
