@@ -140,12 +140,20 @@
     }
 
     .comment-wrapper {
-      background: rgba(255, 255, 237, 0.8);
-      border-radius: 24px;
-      padding: 0;
-      box-sizing: border-box;
       position: relative;
       z-index: 1;
+    }
+
+    .comment-wrapper::before {
+      content: '';
+      position: absolute;
+      top: -24px;
+      left: -24px;
+      right: -24px;
+      bottom: -24px;
+      background: rgba(255, 255, 237, 0.8);
+      border-radius: 32px;
+      z-index: -1;
     }
 
     .comment-content {
