@@ -36,7 +36,7 @@ npm install cheerio ejs fs-extra mammoth puppeteer-core --save
 
 * 头像文件放入 `output/assets/avatar/`
 * 文件名需为 `昵称.jpg`，与评论昵称一致
-* 若要标注【金牌】等，评论昵称需为 `昵称【金牌】：后续文字`
+* 若要标注【金牌】等，评论时昵称需为 `昵称【金牌】：后续文字`
 
 ### 📝 文档格式建议
 

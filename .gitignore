@@ -6,4 +6,6 @@ output/*
 !output/assets/
 output/assets/*
 !output/assets/fonts/
+!output/assets/avatar/
 !output/assets/fonts/*
+output/assets/avatar/*
