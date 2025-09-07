@@ -73,7 +73,8 @@
     }
 
     .jp-title,
-    .cn-title {
+    .cn-title,
+    .cn-title-long {
       writing-mode: vertical-rl;
       text-orientation: upright;
       white-space: normal;
@@ -91,6 +92,19 @@
       overflow: hidden;
     }
 
+    .cn-title-long {
+      position: absolute;
+      right: 100%;
+      font-weight: bold;
+      font-size: 50px;
+      color: #111;
+      white-space: normal;
+      height: 1000px;
+      overflow-wrap: break-word;
+      overflow: visible;
+      z-index: 0;
+    }
+
     .jp-title {
       position: absolute;
       right: 100%;
@@ -98,7 +112,7 @@
       color: #666;
       transform: translateY(2em);
       white-space: nowrap;
-      overflow: visible;
+      overflow: hidden;
       max-height: none;
       z-index: 0;
     }
@@ -205,12 +219,20 @@
     <div class="title-box">
       <div class="label">新番速递</div>
       <div class="title-row">
-        <div class="jp-title">
-          <%= subtitle %>
-        </div>
-        <div class="cn-title">
-          <%= title %>
-        </div>
+        <% if (title.length <=24) { %>
+          <% if (subtitle) { %>
+            <div class="jp-title">
+              <%= subtitle %>
+            </div>
+            <% } %>
+              <div class="cn-title">
+                <%= title %>
+              </div>
+              <% } else { %>
+                <div class="cn-title-long">
+                  <%= title %>
+                </div>
+                <% } %>
       </div>
     </div>
 
