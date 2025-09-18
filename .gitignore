@@ -2,10 +2,10 @@ screenshots/
 data.json
 *.docx
 
-output/*
-!output/assets/
-output/assets/*
-!output/assets/fonts/
-!output/assets/avatar/
-!output/assets/fonts/*
-output/assets/avatar/*
+temp/*
+!temp/assets/
+temp/assets/*
+!temp/assets/avatar/
+temp/assets/avatar/*
+!temp/assets/fonts/
+!temp/assets/fonts/*

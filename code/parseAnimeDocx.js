@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT_DIR = path.join(__dirname, '..');
-const OUTPUT_DIR = path.join(ROOT_DIR, 'output');
+const OUTPUT_DIR = path.join(ROOT_DIR, 'temp');
 const ASSETS_DIR = path.join(OUTPUT_DIR, 'assets', 'visual');
 const JSON_PATH = path.join(__dirname, 'data.json');
 

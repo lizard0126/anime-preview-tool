@@ -1,6 +1,6 @@
 @echo off
-del /q ".\output\*.html"
-del /q ".\output\assets\visual\*.*"
+del /q ".\temp\*.html"
+del /q ".\temp\assets\visual\*.*"
 del /q ".\screenshots\*.*"
-del /q ".\templates\data.json"
+del /q ".\code\data.json"
 exit

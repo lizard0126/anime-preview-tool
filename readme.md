@@ -15,7 +15,7 @@
 npm install cheerio ejs fs-extra mammoth puppeteer-core --save
 ```
 
-如未安装 Edge，请修改 `templates/screenshot-html.js` 中的 `CHROME_PATH` 指向本地浏览器路径。
+如未安装 Edge，请修改 `code/screenshot-html.js` 中的 `CHROME_PATH` 指向本地浏览器路径。
 
 ---
 
@@ -34,7 +34,7 @@ npm install cheerio ejs fs-extra mammoth puppeteer-core --save
 
 ### 🖼 头像命名规范
 
-* 头像文件放入 `output/assets/avatar/`
+* 头像文件放入 `temp/assets/avatar/`
 * 文件名需为 `昵称.jpg`，与评论昵称一致
 * 若要标注【金牌】等，评论时昵称需为 `昵称【金牌】：后续文字`
 
@@ -49,7 +49,7 @@ npm install cheerio ejs fs-extra mammoth puppeteer-core --save
 ## ❓ 常见问题
 
 > **Q: 评论头像没显示？**
-> 请检查头像命名与路径是否正确（`.jpg`，`output/assets/avatar/`）。
+> 请检查头像命名与路径是否正确（`.jpg`，`temp/assets/avatar/`）。
 
 > **Q: 评论图没截图？**
 > 在 `.docx` 中为图片前后加回车，以便正确提取。

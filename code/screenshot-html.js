@@ -7,7 +7,7 @@ const CHROME_PATH = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msed
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const OUTPUT_DIR = path.join(__dirname, '..', 'output');
+const OUTPUT_DIR = path.join(__dirname, '..', 'temp');
 const SCREENSHOT_DIR = path.join(__dirname, '..', 'screenshots');
 
 if (!fs.existsSync(SCREENSHOT_DIR)) {

@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT_DIR = path.join(__dirname, '..');
-const AVATAR_DIR = path.join(ROOT_DIR, 'output', 'assets', 'avatar');
+const AVATAR_DIR = path.join(ROOT_DIR, 'temp', 'assets', 'avatar');
 
 function copyAvatarFiles() {
   const files = fs.readdirSync(AVATAR_DIR);

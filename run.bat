@@ -1,7 +1,7 @@
 @echo off
-node templates/copy-avatars.js
-node templates/parseAnimeDocx.js
-node templates/generate-html.js
-node templates/screenshot-html.js
-node templates/del-avatars.js
+node code/copy-avatars.js
+node code/parseAnimeDocx.js
+node code/generate-html.js
+node code/screenshot-html.js
+node code/del-avatars.js
 exit

@@ -10,7 +10,7 @@
 npm install cheerio ejs fs-extra mammoth puppeteer-core
 
 【使用流程】
-1. 将评论人头像放入 output/assets/avatar/ 文件夹，命名需与评论昵称一致，格式为“昵称.jpg”。
+1. 将评论人头像放入 temp/assets/avatar/ 文件夹，命名需与评论昵称一致，格式为“昵称.jpg”。
 2. 将评论 .docx 文档放入项目根目录（支持多个文档，默认读取最后修改的一个）。
 3. 双击运行 run.bat，一键生成导视图。
 4. 若需清理旧数据，运行 del.bat。
@@ -23,7 +23,7 @@ npm install cheerio ejs fs-extra mammoth puppeteer-core
 
 【常见问题】
 Q: 评论头像未显示？
-A: 请确认头像为 .jpg 格式、命名与评论昵称一致，放在 output/assets/avatar/ 文件夹内。
+A: 请确认头像为 .jpg 格式、命名与评论昵称一致，放在 temp/assets/avatar/ 文件夹内。
 
 Q: 评论图片未显示？
 A: 建议在 Word 中为图片前后添加回车换行，避免被误识别为标题或丢失。
