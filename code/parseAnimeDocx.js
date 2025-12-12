@@ -9,7 +9,7 @@ const ASSETS_DIR = path.join(OUTPUT_DIR, 'assets', 'visual');
 const JSON_PATH = path.join(__dirname, 'data.json');
 
 const EXCLUDE_NAMES = new Set([
-  '导演：', '原案：', '原作：', '动画制作：',
+  '导演：', '原案：', '原作：', '动画制作：', '企划：'
 ]);
 
 function ensureDir(dir) {
