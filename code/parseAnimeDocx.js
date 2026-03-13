@@ -1,7 +1,11 @@
-const mammoth = require('mammoth');
-const cheerio = require('cheerio');
-const fs = require('fs');
-const path = require('path');
+import mammoth from 'mammoth';
+import { load } from 'cheerio';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const ROOT_DIR = path.join(__dirname, '..');
 const OUTPUT_DIR = path.join(ROOT_DIR, 'temp');
@@ -33,14 +37,14 @@ async function parseDocxToJson(docxPath) {
     console.log(`正在读取文档: ${docxPath}`);
 
     const { value: html } = await mammoth.convertToHtml({ path: docxPath });
-    const $ = cheerio.load(html);
+    const $ = load(html);
     const paragraphs = $('p').toArray();
 
     const animeData = [];
     const collectedImages = [];
     let imgCounter = 0;
 
-    paragraphs.forEach(($p, i) => {
+    paragraphs.forEach((_, i) => {
       const img = $(paragraphs[i]).find('img');
       if (img.length > 0) {
         const src = img.attr('src');
@@ -116,7 +120,7 @@ async function parseDocxToJson(docxPath) {
           }
         }
 
-        const hasColon = t.includes('：') ;
+        const hasColon = t.includes('：');
         const hasImg = $p.find('img').length > 0;
 
         if (hasColon) {
@@ -160,7 +164,7 @@ async function parseDocxToJson(docxPath) {
           comments,
         });
       } else {
-        console.log(`[跳过] 找不到标题，段落 ${pIdx}`);
+        console.log(`[跳过] 找不到标题，段落索引 ${pIdx}`);
       }
     }
 

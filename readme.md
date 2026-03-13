@@ -7,13 +7,8 @@
 
 ## 📦 环境要求
 
-* Node.js **v22**
+* Node.js
 * 推荐系统：Windows + Edge（或任意 Chromium 浏览器）
-* 第一次使用请安装依赖（命令行中运行）：
-
-```bash
-npm install cheerio ejs fs-extra mammoth puppeteer-core --save
-```
 
 如未安装 Edge，请修改 `code/screenshot-html.js` 中的 `CHROME_PATH` 指向本地浏览器路径。
 
@@ -21,7 +16,7 @@ npm install cheerio ejs fs-extra mammoth puppeteer-core --save
 
 ## 🚀 使用方法
 
-1. 将 `.docx` 评论文档放入项目根目录（支持多文档，默认读取**最新修改**的一个）。
+1. 将 `.docx` 评论文档放入项目根目录（不支持多文档，默认读取**最新修改**的一个）。
 2. 双击运行 `run.bat` 一键生成导视图：
 
    * 提取文档数据 → 渲染 HTML → 生成截图
@@ -36,7 +31,7 @@ npm install cheerio ejs fs-extra mammoth puppeteer-core --save
 
 * 头像文件放入 `temp/assets/avatar/`
 * 文件名需为 `昵称.jpg`，与评论昵称一致
-* 若要标注【金牌】等，评论时昵称需为 `昵称【金牌】：后续文字`
+* 若要标注【金牌】等，评论时昵称格式需为 `昵称【金牌】：后续文字`
 
 ### 📝 文档格式建议
 
