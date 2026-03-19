@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新番导视图片生成工具</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>天央动漫社节操部 · 新番导视</h1>
+        <form id="configForm">
+            <div class="form-group">
+                <label>DOCX 文件:</label>
+                <div class="input-group">
+                    <input type="text" id="docxPath" placeholder="选择要处理的 docx 文件" required>
+                    <button type="button" id="browseDocx">浏览</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>输出目录:</label>
+                <div class="input-group">
+                    <input type="text" id="outputDir" placeholder="选择输出文件夹" required>
+                    <button type="button" id="browseOutput">浏览</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>添加头像文件:</label>
+                <div class="input-group">
+                    <input type="text" id="avatarFiles" placeholder="选择头像图片文件" readonly>
+                    <button type="button" id="browseAvatars">添加</button>
+                </div>
+                <div id="avatarList" class="file-list"></div>
+            </div>
+
+            <button type="submit" id="startBtn">开始处理</button>
+        </form>
+
+        <div id="logContainer">
+            <h3>处理日志</h3>
+            <div id="log"></div>
+        </div>
+    </div>
+
+    <script src="./renderer.js"></script>
+</body>
+</html>
