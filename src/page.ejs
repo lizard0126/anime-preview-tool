@@ -72,48 +72,47 @@
       transform: translateX(-20px);
     }
 
-    .jp-title,
-    .cn-title,
-    .cn-title-long {
+    .cn-title {
       writing-mode: vertical-rl;
-      text-orientation: upright;
-      white-space: normal;
+      text-orientation: mixed;
       font-family: 'title', sans-serif;
       line-height: 1.5;
-      color: #222;
-    }
-
-    .cn-title {
       font-weight: bold;
       font-size: 50px;
       color: #111;
+      white-space: normal;
       max-height: 700px;
       overflow-wrap: break-word;
       overflow: hidden;
     }
 
     .cn-title-long {
-      position: absolute;
-      right: 100%;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      font-family: 'title', sans-serif;
+      line-height: 1.5;
       font-weight: bold;
       font-size: 50px;
       color: #111;
       white-space: normal;
-      height: 1000px;
+      height: 700px;
       overflow-wrap: break-word;
       overflow: visible;
       z-index: 0;
     }
 
     .jp-title {
-      position: absolute;
-      right: 100%;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      font-family: 'title', sans-serif;
+      line-height: 1.5;
       font-size: 36px;
       color: #666;
-      transform: translateY(2em);
       white-space: nowrap;
       overflow: hidden;
-      max-height: none;
+      transform: translateY(2em);
+      position: absolute;
+      right: 100%;
       z-index: 0;
     }
 
@@ -219,7 +218,7 @@
     <div class="title-box">
       <div class="label">新番速递</div>
       <div class="title-row">
-        <% if (title.length <=24) { %>
+        <% if (title.length <=26) { %>
           <% if (subtitle) { %>
             <div class="jp-title">
               <%= subtitle %>
