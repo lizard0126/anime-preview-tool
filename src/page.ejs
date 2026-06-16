@@ -114,6 +114,7 @@
       position: absolute;
       right: 100%;
       z-index: 0;
+      max-height: 700px;
     }
 
     .visual-container {
@@ -257,6 +258,20 @@
   </div>
 
   <div class="footer-credit">天央动漫社·节操部制作</div>
+
+  <script>
+    window.addEventListener('load', function () {
+      const commentWrapper = document.querySelector('.comment-wrapper');
+      const jpTitle = document.querySelector('.jp-title');
+      if (commentWrapper && jpTitle) {
+        const wrapperBottom = commentWrapper.getBoundingClientRect().bottom;
+        const titleTop = jpTitle.getBoundingClientRect().top;
+        const maxH = wrapperBottom - titleTop;
+        jpTitle.style.maxHeight = maxH + 'px';
+      }
+    });
+  </script>
+
 </body>
 
 </html>
