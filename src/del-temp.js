@@ -17,5 +17,5 @@ function deleteFolderSync(folderPath, logCallback) {
 }
 
 export function deleteTempFile(assetsDir, logCallback) {
-deleteFolderSync(assetsDir, logCallback);
+  deleteFolderSync(assetsDir, logCallback);
 }

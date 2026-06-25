@@ -1,49 +1,47 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>新番导视图片生成工具</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新番导视编辑器</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <h1>天央动漫社节操部 · 新番导视</h1>
-        <form id="configForm">
-            <div class="form-group">
-                <label>DOCX 文件:</label>
-                <div class="input-group">
-                    <input type="text" id="docxPath" placeholder="选择要处理的 docx 文件" required>
-                    <button type="button" id="browseDocx">浏览</button>
-                </div>
-            </div>
+  <div class="app">
+    <!-- 左侧编辑区 -->
+    <div class="editor-panel">
+      <h1>天央动漫社 · 新番导视编辑器</h1>
 
-            <div class="form-group">
-                <label>输出目录:</label>
-                <div class="input-group">
-                    <input type="text" id="outputDir" placeholder="选择输出文件夹" required>
-                    <button type="button" id="browseOutput">浏览</button>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>添加头像文件:</label>
-                <div class="input-group">
-                    <input type="text" id="avatarFiles" placeholder="选择头像图片文件" readonly>
-                    <button type="button" id="browseAvatars">添加</button>
-                </div>
-                <div id="avatarList" class="file-list"></div>
-            </div>
-
-            <button type="submit" id="startBtn">开始处理</button>
-        </form>
-
-        <div id="logContainer">
-            <h3>处理日志</h3>
-            <div id="log"></div>
+      <!-- 工具栏 -->
+      <div class="toolbar">
+        <div class="fetch-group">
+          <input type="text" id="seasonInput" value="202607" placeholder="季度代码，如 202607">
+          <button id="fetchBtn">从 yuc.wiki 抓取</button>
         </div>
+        <button id="addAnimeBtn">+ 添加番剧</button>
+        <button id="loadJsonBtn">导入 JSON</button>
+        <button id="saveJsonBtn">导出 JSON</button>
+        <button id="exportBtn">导出图片</button>
+      </div>
+
+      <!-- 番剧列表 -->
+      <div id="animeList" class="anime-list"></div>
     </div>
 
-    <script src="./renderer.js"></script>
+    <!-- 右侧预览区 -->
+    <div class="preview-panel">
+      <div id="previewContainer">
+        <div class="preview-placeholder">点击番剧标题可预览效果</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 日志区 -->
+  <div id="logContainer">
+    <h3>处理日志</h3>
+    <div id="log"></div>
+  </div>
+
+  <script src="./renderer.js"></script>
 </body>
 </html>
