@@ -18,7 +18,14 @@
       "preload.js",
       "renderer/**/*",
       "src/**/*",
-      "fonts/**/*"
+      "!src/fonts"
+    ],
+    "extraResources": [
+      {
+        "from": "src/fonts",
+        "to": "fonts",
+        "filter": ["**/*"]
+      }
     ],
     "win": {
       "target": "portable",

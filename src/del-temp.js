@@ -1,13 +1,12 @@
 import fs from 'fs';
 import path from 'path';
 
-function deleteFolderSync(folderPath, logCallback) {
+function deleteRecursive(folderPath, logCallback) {
   const items = fs.readdirSync(folderPath);
   items.forEach(item => {
     const itemPath = path.join(folderPath, item);
-    const stat = fs.statSync(itemPath);
-    if (stat.isDirectory()) {
-      deleteFolderSync(itemPath, logCallback);
+    if (fs.statSync(itemPath).isDirectory()) {
+      deleteRecursive(itemPath, logCallback);
     } else {
       fs.unlinkSync(itemPath);
     }
@@ -17,5 +16,5 @@ function deleteFolderSync(folderPath, logCallback) {
 }
 
 export function deleteTempFile(assetsDir, logCallback) {
-  deleteFolderSync(assetsDir, logCallback);
+  deleteRecursive(assetsDir, logCallback);
 }

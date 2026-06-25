@@ -12,6 +12,53 @@ app.whenReady().then(() => {
   createWindow();
 });
 
+// 获取字体目录（兼容开发环境和打包环境）
+// 获取字体目录（兼容开发环境和打包环境）
+function getFontDir() {
+  console.log('=== 字体目录查找 ===');
+  console.log('app.isPackaged:', app.isPackaged);
+  console.log('process.resourcesPath:', process.resourcesPath);
+  console.log('__dirname:', __dirname);
+  
+  // 开发环境
+  const devFontDir = path.join(__dirname, 'src', 'fonts');
+  console.log('开发路径:', devFontDir, '存在:', fs.existsSync(devFontDir));
+  if (fs.existsSync(devFontDir)) {
+    console.log('使用开发路径');
+    return devFontDir;
+  }
+  
+  // 打包环境 - 检查多个可能路径
+  const possiblePaths = [
+    path.join(process.resourcesPath, 'fonts'),
+    path.join(process.resourcesPath, 'src', 'fonts'),
+    path.join(__dirname, '..', 'resources', 'fonts'),
+    path.join(app.getAppPath(), 'src', 'fonts'),
+    path.join(process.cwd(), 'src', 'fonts')
+  ];
+  
+  console.log('检查可能的打包路径:');
+  for (const p of possiblePaths) {
+    console.log('  ', p, '存在:', fs.existsSync(p));
+    if (fs.existsSync(p)) {
+      console.log('使用路径:', p);
+      return p;
+    }
+  }
+  
+  // 如果都不存在，列出 resourcesPath 内容
+  try {
+    console.log('resourcesPath 内容:');
+    const items = fs.readdirSync(process.resourcesPath);
+    items.forEach(item => console.log('  ', item));
+  } catch (e) {
+    console.log('无法读取 resourcesPath:', e.message);
+  }
+  
+  console.log('返回默认路径:', devFontDir);
+  return devFontDir;
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1400,
@@ -33,11 +80,11 @@ function createWindow() {
         ...details.responseHeaders,
         'Content-Security-Policy': [
           "default-src 'self'; " +
-          "img-src 'self' data: blob: file:; " +
-          "font-src 'self' data: file:; " +
+          "img-src 'self' data: blob:; " +
+          "font-src 'self' data:; " +
           "style-src 'self' 'unsafe-inline'; " +
           "script-src 'self' 'unsafe-inline'; " +
-          "connect-src 'self' file:;"
+          "connect-src 'self';"
         ]
       }
     });
@@ -52,40 +99,19 @@ function createWindow() {
 
 // 选择文件
 ipcMain.handle('dialog:openFile', async (event, options) => {
-  try {
-    const result = await dialog.showOpenDialog(mainWindow, {
-      ...options,
-      properties: options.properties || ['openFile']
-    });
-    return result.filePaths;
-  } catch (err) {
-    console.error('文件选择失败:', err);
-    return [];
-  }
+  const result = await dialog.showOpenDialog(mainWindow, options || {});
+  return result.filePaths;
 });
 
 // 选择目录
 ipcMain.handle('dialog:openDirectory', async () => {
-  try {
-    const result = await dialog.showOpenDialog(mainWindow, {
-      properties: ['openDirectory']
-    });
-    return result.filePaths[0];
-  } catch (err) {
-    console.error('目录选择失败:', err);
-    return '';
-  }
+  const result = await dialog.showOpenDialog(mainWindow, { properties: ['openDirectory'] });
+  return result.filePaths[0] || '';
 });
 
 // 加载 JSON
 ipcMain.handle('json:load', async (event, filePath) => {
   try {
-    if (!filePath) {
-      return { success: false, error: '文件路径为空' };
-    }
-    if (!await fs.pathExists(filePath)) {
-      return { success: false, error: '文件不存在' };
-    }
     const data = await fs.readJson(filePath);
     return { success: true, data };
   } catch (err) {
@@ -96,12 +122,8 @@ ipcMain.handle('json:load', async (event, filePath) => {
 // 保存 JSON
 ipcMain.handle('json:save', async (event, data, dir) => {
   try {
-    if (!dir) {
-      return { success: false, error: '目录路径为空' };
-    }
     await fs.ensureDir(dir);
-    const jsonPath = path.join(dir, 'project.json');
-    await fs.writeJson(jsonPath, data, { spaces: 2 });
+    await fs.writeJson(path.join(dir, 'project.json'), data, { spaces: 2 });
     return { success: true };
   } catch (err) {
     return { success: false, error: err.message };
@@ -124,53 +146,25 @@ ipcMain.handle('anime:fetch', async (event, season) => {
 // 处理开始按钮
 ipcMain.handle('process:start', async (event, config) => {
   const { data, outputDir } = config;
-
-  let processorPath;
-  if (app.isPackaged) {
-    processorPath = path.join(process.resourcesPath, 'src', 'processor.js');
-    if (!fs.existsSync(processorPath)) {
-      processorPath = path.join(app.getAppPath(), 'src', 'processor.js');
-    }
-  } else {
-    processorPath = path.join(__dirname, 'src', 'processor.js');
-  }
-  
-  if (!fs.existsSync(processorPath)) {
-    event.sender.send('log', `错误: processor.js 文件不存在: ${processorPath}`);
-    return { success: false, error: `processor.js 文件不存在: ${processorPath}` };
-  }
-  
-  const processorUrl = pathToFileURL(processorPath).href;
+  const processorPath = path.join(__dirname, 'src', 'processor.js');
   
   try {
-    const { processAnimePreview } = await import(processorUrl);
-
-    const sendLog = (msg) => {
-      event.sender.send('log', msg);
-    };
-
+    const { processAnimePreview } = await import(pathToFileURL(processorPath).href);
+    const sendLog = (msg) => event.sender.send('log', msg);
     const result = await processAnimePreview({ data, outputDir }, sendLog);
     event.sender.send('process:done', result);
-    return { success: true, outputDir: result.outputDir };
+    return result;
   } catch (err) {
     event.sender.send('log', `错误: ${err.message}`);
     return { success: false, error: err.message };
   }
 });
 
-// 预览处理
+// 预览处理 - 将所有资源嵌入为 base64
 ipcMain.handle('process:preview', async (event, previewData) => {
   try {
-    if (!previewData) {
-      return { success: false, error: '预览数据为空' };
-    }
-
     const { generateHtml } = await import('./src/generate-html.js');
     const ejsDir = path.join(__dirname, 'src', 'page.ejs');
-    
-    if (!await fs.pathExists(ejsDir)) {
-      return { success: false, error: `模板文件不存在: ${ejsDir}` };
-    }
     
     const tempDir = path.join(app.getPath('temp'), 'anime-preview-' + Date.now());
     await fs.ensureDir(tempDir);
@@ -179,31 +173,32 @@ ipcMain.handle('process:preview', async (event, previewData) => {
     const avatarDir = path.join(tempDir, 'avatar');
     const visualDir = path.join(tempDir, 'visual');
     const fontDir = path.join(tempDir, 'fonts');
-    
     await fs.ensureDir(avatarDir);
     await fs.ensureDir(visualDir);
     await fs.ensureDir(fontDir);
     
-    // 复制字体文件到临时目录
-    const srcFontDir = path.join(__dirname, 'src', 'fonts');
+    // 复制字体文件到临时目录 - 使用 getFontDir()
+    const srcFontDir = getFontDir();
+    console.log('预览字体源目录:', srcFontDir);
+    console.log('预览字体目录是否存在:', await fs.pathExists(srcFontDir));
+    
     if (await fs.pathExists(srcFontDir)) {
-      try {
-        const fontFiles = await fs.readdir(srcFontDir);
-        for (const fontFile of fontFiles) {
-          const srcPath = path.join(srcFontDir, fontFile);
-          if (await fs.pathExists(srcPath)) {
-            const ext = path.extname(fontFile).toLowerCase();
-            if (['.ttf', '.otf', '.woff', '.woff2', '.eot'].includes(ext)) {
-              await fs.copy(srcPath, path.join(fontDir, fontFile));
-            }
-          }
+      const fontFiles = await fs.readdir(srcFontDir);
+      console.log('预览发现的字体文件:', fontFiles);
+      for (const fontFile of fontFiles) {
+        const srcPath = path.join(srcFontDir, fontFile);
+        if (['.ttf', '.otf', '.woff', '.woff2'].includes(path.extname(fontFile))) {
+          await fs.copy(srcPath, path.join(fontDir, fontFile));
+          console.log('预览复制字体:', fontFile);
         }
-      } catch (fontErr) {
-        console.error('字体复制失败:', fontErr);
       }
+    } else {
+      console.log('预览字体目录不存在!');
+      console.log('process.resourcesPath:', process.resourcesPath);
+      console.log('__dirname:', __dirname);
     }
     
-    // 深拷贝预览数据
+    // 深拷贝并处理预览数据
     const previewDataCopy = JSON.parse(JSON.stringify(previewData));
     
     // 处理视觉图
@@ -211,20 +206,12 @@ ipcMain.handle('process:preview', async (event, previewData) => {
       if (previewDataCopy.visual.startsWith('http')) {
         try {
           const { default: axios } = await import('axios');
-          const response = await axios.get(previewDataCopy.visual, { 
-            responseType: 'arraybuffer',
-            timeout: 30000 
-          });
-          const contentType = response.headers['content-type'] || '';
-          let ext = '.jpg';
-          if (contentType.includes('png')) ext = '.png';
-          else if (contentType.includes('webp')) ext = '.webp';
-          
+          const response = await axios.get(previewDataCopy.visual, { responseType: 'arraybuffer', timeout: 30000 });
+          const ext = response.headers['content-type'].includes('png') ? '.png' : '.jpg';
           const visualName = `visual_${Date.now()}${ext}`;
           await fs.writeFile(path.join(visualDir, visualName), response.data);
           previewDataCopy.visual = `visual/${visualName}`;
-        } catch (downloadErr) {
-          console.error('视觉图下载失败:', downloadErr.message);
+        } catch {
           previewDataCopy.visual = '';
         }
       } else if (await fs.pathExists(previewDataCopy.visual)) {
@@ -244,20 +231,12 @@ ipcMain.handle('process:preview', async (event, previewData) => {
         if (comment.avatar.startsWith('http')) {
           try {
             const { default: axios } = await import('axios');
-            const response = await axios.get(comment.avatar, { 
-              responseType: 'arraybuffer',
-              timeout: 30000 
-            });
-            const contentType = response.headers['content-type'] || '';
-            let ext = '.jpg';
-            if (contentType.includes('png')) ext = '.png';
-            else if (contentType.includes('webp')) ext = '.webp';
-            
+            const response = await axios.get(comment.avatar, { responseType: 'arraybuffer', timeout: 30000 });
+            const ext = response.headers['content-type'].includes('png') ? '.png' : '.jpg';
             const avatarName = `avatar_${Date.now()}_${i}${ext}`;
             await fs.writeFile(path.join(avatarDir, avatarName), response.data);
             comment.avatar = `avatar/${avatarName}`;
-          } catch (downloadErr) {
-            console.error('头像下载失败:', downloadErr.message);
+          } catch {
             comment.avatar = '';
           }
         } else if (await fs.pathExists(comment.avatar)) {
@@ -273,225 +252,124 @@ ipcMain.handle('process:preview', async (event, previewData) => {
     // 生成 HTML
     await generateHtml([previewDataCopy], ejsDir, tempDir, () => {});
     
-    // 读取生成的 HTML
+    // 读取并嵌入资源
     const files = await fs.readdir(tempDir);
     const htmlFile = files.find(f => f.endsWith('.html'));
     
     if (htmlFile) {
-      const htmlPath = path.join(tempDir, htmlFile);
-      let htmlContent = await fs.readFile(htmlPath, 'utf-8');
+      let htmlContent = await fs.readFile(path.join(tempDir, htmlFile), 'utf-8');
+      htmlContent = await embedResources(htmlContent, tempDir);
       
-      // 嵌入所有资源为 base64
-      htmlContent = await embedAllResources(htmlContent, tempDir);
-      
-      // 清理临时文件
-      setTimeout(async () => {
-        try {
-          await fs.remove(tempDir);
-        } catch (e) {
-          // 忽略清理错误
-        }
-      }, 1000);
-      
+      setTimeout(() => fs.remove(tempDir).catch(() => {}), 1000);
       return { success: true, html: htmlContent };
-    } else {
-      await fs.remove(tempDir).catch(() => {});
-      return { success: false, error: '生成 HTML 失败' };
     }
+    
+    await fs.remove(tempDir).catch(() => {});
+    return { success: false, error: '生成 HTML 失败' };
   } catch (err) {
-    console.error('预览处理失败:', err);
     return { success: false, error: err.message };
   }
 });
 
-// 嵌入所有资源为 base64
-async function embedAllResources(htmlContent, baseDir) {
+// 嵌入资源为 base64
+async function embedResources(htmlContent, baseDir) {
   let result = htmlContent;
   
-  // 处理所有图片标签
+  // 处理图片标签
   const imgRegex = /<img([^>]*)src="([^"]+)"([^>]*)>/g;
+  const imgMatches = [];
   let match;
-  let imgMatches = [];
-  
   while ((match = imgRegex.exec(htmlContent)) !== null) {
-    imgMatches.push({
-      fullMatch: match[0],
-      beforeSrc: match[1],
-      src: match[2],
-      afterSrc: match[3]
-    });
-  }
-
-  for (const imgMatch of imgMatches) {
-    const { fullMatch, beforeSrc, src, afterSrc } = imgMatch;
-    
-    if (src.startsWith('data:') || src.startsWith('http://') || src.startsWith('https://')) {
-      continue;
-    }
-    
-    try {
-      let filePath;
-      if (src.startsWith('file://')) {
-        filePath = decodeURIComponent(src.replace('file:///', '')).replace(/\\/g, '/');
-        if (process.platform === 'win32') {
-          filePath = filePath.replace(/^\//, '');
-        }
-      } else {
-        const cleanSrc = src.replace(/^\.\//, '').replace(/^\//, '');
-        filePath = path.join(baseDir, cleanSrc);
-      }
-      
-      if (await fs.pathExists(filePath)) {
-        const buffer = await fs.readFile(filePath);
-        const ext = path.extname(filePath).toLowerCase();
-        let mimeType = 'image/jpeg';
-        if (ext === '.png') mimeType = 'image/png';
-        else if (ext === '.webp') mimeType = 'image/webp';
-        else if (ext === '.gif') mimeType = 'image/gif';
-        else if (ext === '.svg') mimeType = 'image/svg+xml';
-        
-        const base64 = buffer.toString('base64');
-        const newSrc = `data:${mimeType};base64,${base64}`;
-        const newImg = `<img${beforeSrc}src="${newSrc}"${afterSrc}>`;
-        result = result.replace(fullMatch, newImg);
-      } else {
-        // 文件不存在，使用占位图
-        const placeholder = 'data:image/svg+xml;base64,' + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#eee"/><text x="50" y="50" text-anchor="middle" dy=".3em" fill="#999" font-size="12">无图</text></svg>').toString('base64');
-        const newImg = `<img${beforeSrc}src="${placeholder}"${afterSrc}>`;
-        result = result.replace(fullMatch, newImg);
-      }
-    } catch (err) {
-      console.error('图片嵌入失败:', err);
-    }
+    imgMatches.push(match);
   }
   
-  // 处理字体文件 (@font-face 中的 url)
+  for (const m of imgMatches) {
+    const [full, before, src, after] = m;
+    if (src.startsWith('data:') || src.startsWith('http')) continue;
+    
+    try {
+      const cleanSrc = src.replace(/^\.\//, '');
+      const filePath = path.join(baseDir, cleanSrc);
+      if (await fs.pathExists(filePath)) {
+        const buffer = await fs.readFile(filePath);
+        const extMap = { '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml' };
+        const mime = extMap[path.extname(filePath)] || 'image/jpeg';
+        const newSrc = `data:${mime};base64,${buffer.toString('base64')}`;
+        result = result.replace(full, `<img${before}src="${newSrc}"${after}>`);
+      }
+    } catch {}
+  }
+  
+  // 处理字体
   const fontRegex = /url\(['"]?([^'")]+\.(ttf|otf|woff|woff2))['"]?\)/gi;
-  let fontMatch;
-  let fontMatches = [];
-  
-  while ((fontMatch = fontRegex.exec(result)) !== null) {
-    fontMatches.push({
-      fullMatch: fontMatch[0],
-      fontPath: fontMatch[1]
-    });
+  const fontMatches = [];
+  while ((match = fontRegex.exec(result)) !== null) {
+    fontMatches.push(match);
   }
-
-  for (const fontMatch of fontMatches) {
-    const { fullMatch, fontPath } = fontMatch;
-    
-    if (fontPath.startsWith('data:')) {
-      continue;
-    }
+  
+  for (const m of fontMatches) {
+    const [full, fontPath] = m;
+    if (fontPath.startsWith('data:')) continue;
     
     try {
-      let filePath;
-      if (fontPath.startsWith('file://')) {
-        filePath = decodeURIComponent(fontPath.replace('file:///', '')).replace(/\\/g, '/');
-        if (process.platform === 'win32') {
-          filePath = filePath.replace(/^\//, '');
-        }
-      } else {
-        const cleanPath = fontPath.replace(/^\.\//, '').replace(/^\//, '');
-        filePath = path.join(baseDir, cleanPath);
-      }
-      
+      const cleanPath = fontPath.replace(/^\.\//, '');
+      const filePath = path.join(baseDir, cleanPath);
       if (await fs.pathExists(filePath)) {
         const buffer = await fs.readFile(filePath);
-        const ext = path.extname(filePath).toLowerCase();
-        let mimeType = 'font/ttf';
-        if (ext === '.otf') mimeType = 'font/otf';
-        else if (ext === '.woff') mimeType = 'font/woff';
-        else if (ext === '.woff2') mimeType = 'font/woff2';
-        
-        const base64 = buffer.toString('base64');
-        const newUrl = `url('data:${mimeType};base64,${base64}')`;
-        result = result.replace(fullMatch, newUrl);
+        const extMap = { '.otf': 'font/otf', '.woff': 'font/woff', '.woff2': 'font/woff2' };
+        const mime = extMap[path.extname(filePath)] || 'font/ttf';
+        const newUrl = `url('data:${mime};base64,${buffer.toString('base64')}')`;
+        result = result.replace(full, newUrl);
       }
-    } catch (err) {
-      console.error('字体嵌入失败:', err);
-    }
+    } catch {}
   }
   
   return result;
 }
 
-// 读取文件内容（用于渲染进程加载本地文件）
-ipcMain.handle('file:read', async (event, filePath) => {
-  try {
-    if (await fs.pathExists(filePath)) {
-      const buffer = await fs.readFile(filePath);
-      const ext = path.extname(filePath).toLowerCase();
-      let mimeType = 'image/jpeg';
-      if (ext === '.png') mimeType = 'image/png';
-      else if (ext === '.webp') mimeType = 'image/webp';
-      else if (ext === '.gif') mimeType = 'image/gif';
-      else if (ext === '.ttf') mimeType = 'font/ttf';
-      else if (ext === '.otf') mimeType = 'font/otf';
-      
-      return {
-        success: true,
-        data: buffer.toString('base64'),
-        mimeType: mimeType
-      };
-    }
-    return { success: false, error: '文件不存在' };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
-});
-
-// 读取字体文件
-ipcMain.handle('file:readFont', async (event, fontName) => {
-  try {
-    const fontPath = path.join(__dirname, 'src', 'fonts', fontName);
-    if (await fs.pathExists(fontPath)) {
-      const buffer = await fs.readFile(fontPath);
-      return {
-        success: true,
-        data: buffer.toString('base64'),
-        fontName: fontName
-      };
-    }
-    return { success: false, error: '字体文件不存在' };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
-});
-
-// 批量读取字体文件
+// 批量读取字体文件（修复打包路径）
 ipcMain.handle('file:readAllFonts', async () => {
   try {
-    const fontDir = path.join(__dirname, 'src', 'fonts');
-    if (!await fs.pathExists(fontDir)) {
-      return { success: false, error: '字体目录不存在' };
-    }
+    const fontDir = getFontDir();
+    console.log('字体目录路径:', fontDir);
+    console.log('字体目录是否存在:', await fs.pathExists(fontDir));
     
-    const files = await fs.readdir(fontDir);
     const fonts = {};
-    
-    for (const file of files) {
-      const ext = path.extname(file).toLowerCase();
-      if (['.ttf', '.otf', '.woff', '.woff2'].includes(ext)) {
-        const filePath = path.join(fontDir, file);
-        const buffer = await fs.readFile(filePath);
-        fonts[file] = buffer.toString('base64');
+    if (await fs.pathExists(fontDir)) {
+      const files = await fs.readdir(fontDir);
+      console.log('字体文件列表:', files);
+      
+      for (const file of files) {
+        if (['.ttf', '.otf', '.woff', '.woff2'].includes(path.extname(file))) {
+          const filePath = path.join(fontDir, file);
+          const buffer = await fs.readFile(filePath);
+          fonts[file] = buffer.toString('base64');
+          console.log(`已读取字体: ${file} (${buffer.length} 字节)`);
+        }
       }
+    } else {
+      console.log('字体目录不存在!');
+      console.log('process.resourcesPath:', process.resourcesPath);
+      console.log('__dirname:', __dirname);
     }
     
     return { success: true, fonts };
   } catch (err) {
-    return { success: false, error: err.message };
+    console.error('字体加载错误:', err);
+    return { success: false, error: err.message, fonts: {} };
   }
 });
 
-// 清理预览临时文件
-ipcMain.handle('preview:cleanup', async (event, tempDir) => {
+// 读取文件
+ipcMain.handle('file:read', async (event, filePath) => {
   try {
-    if (tempDir && await fs.pathExists(tempDir)) {
-      await fs.remove(tempDir);
+    if (await fs.pathExists(filePath)) {
+      const buffer = await fs.readFile(filePath);
+      const extMap = { '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif', '.ttf': 'font/ttf', '.otf': 'font/otf' };
+      const mime = extMap[path.extname(filePath)] || 'image/jpeg';
+      return { success: true, data: buffer.toString('base64'), mimeType: mime };
     }
-    return { success: true };
+    return { success: false, error: '文件不存在' };
   } catch (err) {
     return { success: false, error: err.message };
   }
@@ -501,21 +379,14 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
-// 应用退出时清理临时目录
 app.on('before-quit', async () => {
-  const tempDir = app.getPath('temp');
+  const tempDirBase = app.getPath('temp');
   try {
-    const files = await fs.readdir(tempDir);
+    const files = await fs.readdir(tempDirBase);
     for (const file of files) {
       if (file.startsWith('anime-preview-')) {
-        try {
-          await fs.remove(path.join(tempDir, file));
-        } catch (e) {
-          // 忽略清理错误
-        }
+        await fs.remove(path.join(tempDirBase, file)).catch(() => {});
       }
     }
-  } catch (e) {
-    // 忽略清理错误
-  }
+  } catch {}
 });
