@@ -3,9 +3,15 @@ let projectData = {
   animes: []
 };
 
+let defaultCommenter = {
+  name: '',
+  avatar: ''
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   initEventListeners();
   renderAnimeList();
+  renderDefaultCommenterUI();
 });
 
 function initEventListeners() {
@@ -42,7 +48,7 @@ function initEventListeners() {
   });
 
   document.getElementById('addAnimeBtn').addEventListener('click', () => {
-    projectData.animes.push({ title: '新番名称', subtitle: '', type: '', tags: [], visual: '', staff: '', cast: '', broadcast: '', comments: [], selected: true });
+    projectData.animes.push({ title: '新番名称', subtitle: '日文原名', type: '', tags: [], visual: '', staff: '', cast: '', broadcast: '', comments: [], selected: true });
     renderAnimeList();
   });
 
@@ -95,8 +101,96 @@ function initEventListeners() {
     }
   });
 
+  // 清除全部动画
+  document.getElementById('clearAllBtn').addEventListener('click', () => {
+    if (!projectData.animes?.length) {
+      document.getElementById('log').innerHTML += `<div style="color:orange;">⚠️ 没有动画可清除</div>`;
+      return;
+    }
+
+    if (confirm(`确定要清除全部 ${projectData.animes.length} 部动画吗？此操作不可撤销！`)) {
+      projectData.animes = [];
+      renderAnimeList();
+      document.getElementById('log').innerHTML += `<div style="color:green;">✅ 已清除全部动画</div>`;
+    }
+  });
+
   window.addEventListener('beforeunload', () => {
     window.electronAPI.removeAllListeners?.('log');
+  });
+
+  // 日志区高度调整
+  const logContainer = document.getElementById('logContainer');
+  const resizeHandle = document.getElementById('logResizeHandle');
+
+  if (resizeHandle) {
+    resizeHandle.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+
+      const startY = e.clientY;
+      const startHeight = logContainer.offsetHeight;
+
+      const onMouseMove = (moveEvent) => {
+        const deltaY = startY - moveEvent.clientY;
+        const newHeight = Math.max(40, Math.min(400, startHeight + deltaY));
+        logContainer.style.height = `${newHeight}px`;
+
+        // 同时调整 .app 的高度
+        const app = document.querySelector('.app');
+        if (app) {
+          app.style.height = `calc(100vh - ${newHeight}px)`;
+        }
+      };
+
+      const onMouseUp = () => {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      };
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+
+      document.body.style.cursor = 'row-resize';
+      document.body.style.userSelect = 'none';
+    });
+  }
+}
+
+// 渲染默认评论者 UI
+function renderDefaultCommenterUI() {
+  const container = document.getElementById('defaultCommenterContainer');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="default-commenter">
+      <span class="dc-label">默认信息:</span>
+      <input type="text" class="dc-name" value="${escapeHtml(defaultCommenter.name)}" placeholder="昵称">
+      <span class="dc-avatar-path">${defaultCommenter.avatar ? '已选择头像: ' + defaultCommenter.avatar.split(/[/\\]/).pop() : '未选择头像'}</span>
+      <button class="dc-select-avatar">选择头像</button>
+      <button class="dc-clear">清除</button>
+    </div>
+  `;
+
+  container.querySelector('.dc-name').addEventListener('change', (e) => {
+    defaultCommenter.name = e.target.value;
+    renderAnimeList();
+  });
+
+  container.querySelector('.dc-select-avatar').addEventListener('click', async () => {
+    const files = await window.electronAPI.selectFile({ properties: ['openFile'], filters: [{ name: '图片文件', extensions: ['jpg', 'png', 'jpeg', 'webp'] }] });
+    if (files?.length) {
+      defaultCommenter.avatar = files[0];
+      renderDefaultCommenterUI();
+      renderAnimeList();
+    }
+  });
+
+  container.querySelector('.dc-clear').addEventListener('click', () => {
+    defaultCommenter = { name: '', avatar: '' };
+    renderDefaultCommenterUI();
+    renderAnimeList();
   });
 }
 
@@ -130,6 +224,8 @@ function renderAnimeList() {
         <div class="tags">${tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
         <span>${escapeHtml(anime.broadcast || '')}</span>
       </div>
+      ${anime.staff ? `<div class="anime-detail"><span class="detail-label">制作:</span><span class="detail-text">${escapeHtml(anime.staff)}</span></div>` : ''}
+      ${anime.cast ? `<div class="anime-detail"><span class="detail-label">声优:</span><span class="detail-text">${escapeHtml(anime.cast)}</span></div>` : ''}
       <div class="visual-select">
         <span class="visual-path" title="${escapeHtml(anime.visual || '未选择视觉图')}">${anime.visual || '未选择视觉图'}</span>
         <button class="select-visual-btn" data-index="${index}">选择视觉图</button>
@@ -137,10 +233,12 @@ function renderAnimeList() {
       <div class="comments-section">
         <div class="comments-header">
           <span>评论 (${comments.length})</span>
+          <button class="add-default-comment-btn" data-index="${index}" ${defaultCommenter.name ? '' : 'disabled'}>${defaultCommenter.name ? '添加' + escapeHtml(defaultCommenter.name) + '的评论' : '请先设置默认信息'}</button>
           <button class="add-comment-btn" data-index="${index}">添加评论</button>
         </div>
         <div class="comments-list" data-index="${index}">
-          ${comments.map((c, ci) => `
+          ${comments.map((c, ci) => {
+      return `
             <div class="comment-item">
               <div class="comment-row">
                 <input type="text" class="comment-name" value="${escapeHtml(c.name || '')}" placeholder="昵称" data-anime="${index}" data-comment="${ci}">
@@ -152,17 +250,32 @@ function renderAnimeList() {
                 </select>
                 <span class="avatar-path">${c.avatar ? '已选择头像' : '未选择头像'}</span>
                 <button class="select-avatar-btn" data-anime="${index}" data-comment="${ci}">头像</button>
+                <button class="add-comment-image-btn" data-anime="${index}" data-comment="${ci}" title="插入图片">插入图片</button>
                 <button class="delete-comment-btn" data-anime="${index}" data-comment="${ci}">×</button>
               </div>
               <textarea class="comment-text" placeholder="评论内容" data-anime="${index}" data-comment="${ci}">${escapeHtml(c.text || '')}</textarea>
-            </div>`
-    ).join('')}
+              <div class="comment-images">
+                ${(c.images || []).map((img, ii) => `
+                  <div class="comment-image-item" data-anime="${index}" data-comment="${ci}" data-image="${ii}">
+                    <img src="${escapeHtml(img)}" class="comment-image-thumb" title="点击移除">
+                    <button class="remove-comment-image-btn" data-anime="${index}" data-comment="${ci}" data-image="${ii}">×</button>
+                  </div>
+                `).join('')}
+              </div>
+            </div>`;
+    }).join('')}
         </div>
       </div>`;
     container.appendChild(card);
   });
 
   bindAnimeEvents();
+}
+
+// 从文本中提取图片标记
+function extractImageFromText(text) {
+  const match = text.match(/\[img:([^\]]+)\]/);
+  return match ? match[1] : null;
 }
 
 function bindAnimeEvents() {
@@ -207,11 +320,30 @@ function bindAnimeEvents() {
     });
   });
 
+  // 普通添加评论
   document.querySelectorAll('.add-comment-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       const idx = parseInt(e.target.dataset.index);
       projectData.animes[idx].comments = projectData.animes[idx].comments || [];
-      projectData.animes[idx].comments.push({ name: '', avatar: '', text: '', medal: '' });
+      projectData.animes[idx].comments.push({ name: '', avatar: '', text: '', medal: '', images: [] });
+      renderAnimeList();
+    });
+  });
+
+  // 带默认值的添加评论
+  document.querySelectorAll('.add-default-comment-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const idx = parseInt(e.target.dataset.index);
+      if (!defaultCommenter.name) return;
+
+      projectData.animes[idx].comments = projectData.animes[idx].comments || [];
+      projectData.animes[idx].comments.push({
+        name: defaultCommenter.name,
+        avatar: defaultCommenter.avatar,
+        text: '',
+        medal: '',
+        images: []
+      });
       renderAnimeList();
     });
   });
@@ -219,21 +351,27 @@ function bindAnimeEvents() {
   document.querySelectorAll('.comment-name').forEach(input => {
     input.addEventListener('change', e => {
       const { anime, comment } = e.target.dataset;
-      projectData.animes[anime].comments[comment].name = e.target.value;
+      if (projectData.animes[anime]?.comments[comment]) {
+        projectData.animes[anime].comments[comment].name = e.target.value;
+      }
     });
   });
 
   document.querySelectorAll('.comment-text').forEach(textarea => {
     textarea.addEventListener('change', e => {
       const { anime, comment } = e.target.dataset;
-      projectData.animes[anime].comments[comment].text = e.target.value;
+      if (projectData.animes[anime]?.comments[comment]) {
+        projectData.animes[anime].comments[comment].text = e.target.value;
+      }
     });
   });
 
   document.querySelectorAll('.comment-medal').forEach(select => {
     select.addEventListener('change', e => {
       const { anime, comment } = e.target.dataset;
-      projectData.animes[anime].comments[comment].medal = e.target.value;
+      if (projectData.animes[anime]?.comments[comment]) {
+        projectData.animes[anime].comments[comment].medal = e.target.value;
+      }
     });
   });
 
@@ -242,7 +380,46 @@ function bindAnimeEvents() {
       const files = await window.electronAPI.selectFile({ properties: ['openFile'], filters: [{ name: '图片文件', extensions: ['jpg', 'png', 'jpeg', 'webp'] }] });
       if (files?.length) {
         const { anime, comment } = e.target.dataset;
-        projectData.animes[anime].comments[comment].avatar = files[0];
+        if (projectData.animes[anime]?.comments[comment]) {
+          projectData.animes[anime].comments[comment].avatar = files[0];
+          renderAnimeList();
+        }
+      }
+    });
+  });
+
+  // 添加评论图片
+  document.querySelectorAll('.add-comment-image-btn').forEach(btn => {
+    btn.addEventListener('click', async e => {
+      const files = await window.electronAPI.selectFile({ properties: ['openFile'], filters: [{ name: '图片文件', extensions: ['jpg', 'png', 'jpeg', 'webp'] }] });
+      if (files?.length) {
+        const { anime, comment } = e.target.dataset;
+        const commentData = projectData.animes[anime]?.comments[comment];
+        if (!commentData) return;
+        if (!commentData.images) commentData.images = [];
+
+        // 读取文件为 base64 并存储
+        const fileData = await window.electronAPI.readFile(files[0]);
+        if (fileData.success) {
+          const dataUrl = `data:${fileData.mimeType};base64,${fileData.data}`;
+          commentData.images.push(dataUrl);
+        } else {
+          // 如果读取失败，存储文件路径
+          commentData.images.push(files[0]);
+        }
+
+        renderAnimeList();
+      }
+    });
+  });
+
+  // 删除评论图片
+  document.querySelectorAll('.remove-comment-image-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const { anime, comment, image } = e.target.dataset;
+      const commentData = projectData.animes[anime]?.comments[comment];
+      if (commentData?.images) {
+        commentData.images.splice(parseInt(image), 1);
         renderAnimeList();
       }
     });
@@ -251,8 +428,10 @@ function bindAnimeEvents() {
   document.querySelectorAll('.delete-comment-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       const { anime, comment } = e.target.dataset;
-      projectData.animes[anime].comments.splice(parseInt(comment), 1);
-      renderAnimeList();
+      if (projectData.animes[anime]?.comments) {
+        projectData.animes[anime].comments.splice(parseInt(comment), 1);
+        renderAnimeList();
+      }
     });
   });
 }
@@ -271,39 +450,19 @@ async function previewAnime(index) {
       return;
     }
 
-    // 读取字体 - 添加调试信息
     const fontResult = await window.electronAPI.readAllFonts();
-    document.getElementById('log').innerHTML += `<div style="color:gray;">字体加载结果: ${JSON.stringify(fontResult.success ? Object.keys(fontResult.fonts) : '失败')}</div>`;
 
     let fontStyles = '';
     if (fontResult.success) {
       const fonts = fontResult.fonts;
-      if (fonts['label.ttf']) {
-        fontStyles += `@font-face{font-family:'label';src:url('data:font/ttf;base64,${fonts['label.ttf']}')format('truetype')}`;
-        document.getElementById('log').innerHTML += `<div style="color:gray;">✅ 已加载 label.ttf</div>`;
-      } else {
-        document.getElementById('log').innerHTML += `<div style="color:orange;">⚠️ 未找到 label.ttf</div>`;
-      }
-      if (fonts['title.ttf']) {
-        fontStyles += `@font-face{font-family:'title';src:url('data:font/ttf;base64,${fonts['title.ttf']}')format('truetype')}`;
-        document.getElementById('log').innerHTML += `<div style="color:gray;">✅ 已加载 title.ttf</div>`;
-      } else {
-        document.getElementById('log').innerHTML += `<div style="color:orange;">⚠️ 未找到 title.ttf</div>`;
-      }
-      if (fonts['footer.ttf']) {
-        fontStyles += `@font-face{font-family:'footer';src:url('data:font/ttf;base64,${fonts['footer.ttf']}')format('truetype')}`;
-        document.getElementById('log').innerHTML += `<div style="color:gray;">✅ 已加载 footer.ttf</div>`;
-      } else {
-        document.getElementById('log').innerHTML += `<div style="color:orange;">⚠️ 未找到 footer.ttf</div>`;
-      }
-    } else {
-      document.getElementById('log').innerHTML += `<div style="color:red;">❌ 字体加载失败: ${escapeHtml(fontResult.error)}</div>`;
+      if (fonts['label.ttf']) fontStyles += `@font-face{font-family:'label';src:url('data:font/ttf;base64,${fonts['label.ttf']}')format('truetype')}`;
+      if (fonts['title.ttf']) fontStyles += `@font-face{font-family:'title';src:url('data:font/ttf;base64,${fonts['title.ttf']}')format('truetype')}`;
+      if (fonts['footer.ttf']) fontStyles += `@font-face{font-family:'footer';src:url('data:font/ttf;base64,${fonts['footer.ttf']}')format('truetype')}`;
     }
 
     let html = result.html;
     html = html.replace(/@font-face\s*\{[^}]*\}/g, '');
 
-    // 嵌入视觉图
     if (anime.visual && !anime.visual.startsWith('http') && !anime.visual.startsWith('data:')) {
       const imgData = await window.electronAPI.readFile(anime.visual);
       if (imgData.success) {
@@ -312,9 +471,10 @@ async function previewAnime(index) {
       }
     }
 
-    // 嵌入头像
+    // 处理头像和评论图片
     if (anime.comments) {
       for (const comment of anime.comments) {
+        // 处理头像
         if (comment.avatar && !comment.avatar.startsWith('http') && !comment.avatar.startsWith('data:')) {
           const avatarData = await window.electronAPI.readFile(comment.avatar);
           if (avatarData.success) {
@@ -324,17 +484,42 @@ async function previewAnime(index) {
             html = html.replace(re, `$1${dataUrl}$2`);
           }
         }
+
+        // 处理评论中的图片
+        if (comment.images && comment.images.length > 0) {
+          let imageHtml = '';
+          for (const img of comment.images) {
+            if (img.startsWith('data:')) {
+              imageHtml += `<img src="${img}" style="max-width:100%;height:auto;display:block;margin-top:12px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,0.2);max-height:300px;">`;
+            } else {
+              try {
+                const fileData = await window.electronAPI.readFile(img);
+                if (fileData.success) {
+                  const dataUrl = `data:${fileData.mimeType};base64,${fileData.data}`;
+                  imageHtml += `<img src="${dataUrl}" style="max-width:100%;height:auto;display:block;margin-top:12px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,0.2);max-height:300px;">`;
+                }
+              } catch (err) {
+                console.error('评论图片加载失败:', err);
+              }
+            }
+          }
+
+          if (imageHtml) {
+            html = html.replace(
+              /(<div class="comment-text">[\s\S]*?<\/div>)/,
+              `$1${imageHtml}`
+            );
+          }
+        }
       }
     }
 
-    // 移除外部脚本引用
     html = html.replace(/<script[^>]*src="[^"]*"[^>]*><\/script>/g, '');
 
-    // 提取样式和内容
     const styles = extractStyles(html);
     const body = extractBody(html);
+    const fullStyles = fontStyles + '\n' + styles;
 
-    // 创建 iframe 隔离样式
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'width:100%;height:100%;border:none;overflow:auto;background:#fffef5;border-radius:8px;';
 
@@ -345,15 +530,27 @@ async function previewAnime(index) {
     doc.open();
     doc.write(`<!DOCTYPE html>
 <html lang="zh">
-<head><meta charset="UTF-8">
-<style>${fontStyles}
-body{margin:0;padding:40px;width:800px;font-family:sans-serif;background:#fffef5;box-sizing:border-box;}
-${styles}</style></head>
-<body>${body}
-<script>window.addEventListener('load',function(){setTimeout(function(){
-var cw=document.querySelector('.comment-wrapper'),jt=document.querySelector('.jp-title');
-if(cw&&jt){var mh=cw.getBoundingClientRect().bottom-jt.getBoundingClientRect().top;jt.style.maxHeight=mh+'px';}},500)});<\/script>
-</body></html>`);
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>${fullStyles}</style>
+</head>
+<body>
+  ${body}
+  <script>
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        var cw = document.querySelector('.comment-wrapper');
+        var jt = document.querySelector('.jp-title');
+        if (cw && jt) {
+          var mh = cw.getBoundingClientRect().bottom - jt.getBoundingClientRect().top;
+          jt.style.maxHeight = mh + 'px';
+        }
+      }, 500);
+    });
+  </script>
+</body>
+</html>`);
     doc.close();
 
     document.getElementById('log').innerHTML += `<div style="color:green;">✅ 预览生成成功</div>`;

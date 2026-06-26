@@ -16,26 +16,51 @@ export async function fetchAnimeList(season = '202607') {
 }
 
 function parseEntry($) {
-  const title = $('[class^="title_cn"]').first().text().trim();
-  if (!title) return null;
+  const title = $('[class^="title_cn_r"]').first().text().trim();
+  const subtitle = $('[class^="title_jp_r"]').first().text().trim() || '';
+  const type = $('[class^="type_"]').first().text().trim() || '';
+
+  const tags = [];
+  $('[class^="type_tag"]').each((_, el) => {
+    const t = $(el).text().trim();
+    if (t) {
+      t.split('\n').forEach(line => {
+        const trimmed = line.trim();
+        if (trimmed) tags.push(trimmed);
+      });
+    }
+  });
+
+  let visual = '';
+  $('img[data-src]').first().each((_, el) => {
+    visual = $(el).attr('data-src') || '';
+  });
+
+let staff = '';
+$('[class^="staff_r"]').first().each((_, el) => {
+  staff = $(el).html() || '';
+  staff = staff.replace(/\s*<br\s*\/?>\s*/gi, '\n').replace(/&nbsp;/g, ' ').trim();
+  staff = staff.split('\n').map(line => line.trim()).filter(Boolean).join('\n');
+});
+
+let cast = '';
+$('[class^="cast_r"]').first().each((_, el) => {
+  cast = $(el).html() || '';
+  cast = cast.replace(/\s*<br\s*\/?>\s*/gi, '\n').replace(/&nbsp;/g, ' ').trim();
+  cast = cast.split('\n').map(line => line.trim()).filter(Boolean).join('\n');
+});
+
+  const broadcast = $('.broadcast_r').first().text().trim() || '';
 
   return {
     title,
-    subtitle: $('[class^="title_jp"]').first().text().trim() || '',
-    type: $('.type_a_r, .type_b_r, .type_c_r').first().text().trim() || '',
-    tags: (() => {
-      const tags = [];
-      $('[class^="type_tag"]').each((_, el) => { const t = $(el).text().trim(); if (t) tags.push(t); });
-      return tags;
-    })(),
-    visual: (() => {
-      let v = '';
-      $('img[data-src]').first().each((_, el) => { v = $(el).attr('data-src') || ''; });
-      return v;
-    })(),
-    staff: $('[class^="staff_r"]').first().text().trim().replace(/\s+/g, '') || '',
-    cast: $('[class^="cast_r"]').first().text().trim().replace(/\s+/g, ' ') || '',
-    broadcast: $('.broadcast_r').first().text().trim() || '',
+    subtitle,
+    type,
+    tags,
+    visual,
+    staff,
+    cast,
+    broadcast,
     comments: [],
     selected: true
   };

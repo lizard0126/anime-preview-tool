@@ -58,16 +58,14 @@ async function launchBrowser(logCallback) {
   } catch {
     for (const exePath of BROWSER_PATHS) {
       if (fs.existsSync(exePath)) {
-        try {
-          const browser = await puppeteer.launch({
-            executablePath: exePath,
-            headless: 'new',
-            args: ['--allow-file-access-from-files', '--no-sandbox', '--font-render-hinting=none'],
-            defaultViewport: { width: 800, height: 1600 }
-          });
-          logCallback(`使用系统浏览器: ${path.basename(exePath)}`);
-          return browser;
-        } catch {}
+        const browser = await puppeteer.launch({
+          executablePath: exePath,
+          headless: 'new',
+          args: ['--allow-file-access-from-files', '--no-sandbox', '--font-render-hinting=none'],
+          defaultViewport: { width: 800, height: 1600 }
+        });
+        logCallback(`使用系统浏览器: ${path.basename(exePath)}`);
+        return browser;
       }
     }
     logCallback('无法启动任何浏览器');

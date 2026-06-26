@@ -55,7 +55,7 @@ h1 {
   color: #333;
   margin-bottom: 16px;
   padding-bottom: 12px;
-  border-bottom: 2px solid #4a90d9;
+  border-bottom: 2px solid #5a6fd6;
 }
 
 .toolbar {
@@ -80,7 +80,12 @@ h1 {
   font-size: 13px;
 }
 
-.toolbar button {
+/* ========== 全局按钮统一样式 ========== */
+.toolbar button,
+.comments-header button,
+.comment-row button,
+.visual-select button,
+.default-commenter button {
   padding: 6px 14px;
   border: none;
   border-radius: 4px;
@@ -89,51 +94,62 @@ h1 {
   transition: all 0.2s;
 }
 
-.toolbar button:disabled {
-  opacity: 0.6;
+.toolbar button:disabled,
+.comments-header button:disabled,
+.comment-row button:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
+/* ========== 工具栏按钮 ========== */
 #fetchBtn {
-  background: #722ed1;
+  background: #5a6fd6;
   color: white;
 }
+
 #fetchBtn:hover:not(:disabled) {
-  background: #5b21a0;
+  background: #4a5fc6;
 }
 
 #addAnimeBtn {
   background: #52c41a;
   color: white;
 }
+
 #addAnimeBtn:hover:not(:disabled) {
-  background: #389e0d;
+  background: #45a518;
 }
 
-#loadJsonBtn {
-  background: #faad14;
-  color: white;
-}
-#loadJsonBtn:hover:not(:disabled) {
-  background: #d48806;
-}
-
+#loadJsonBtn,
 #saveJsonBtn {
-  background: #1890ff;
+  background: #5a6fd6;
   color: white;
 }
+
+#loadJsonBtn:hover:not(:disabled),
 #saveJsonBtn:hover:not(:disabled) {
-  background: #096dd9;
+  background: #4a5fc6;
 }
 
 #exportBtn {
-  background: #eb2f96;
+  background: #eb6f9e;
   color: white;
 }
+
 #exportBtn:hover:not(:disabled) {
-  background: #c41d7e;
+  background: #d85a8a;
 }
 
+#clearAllBtn {
+  background: #e06060;
+  color: white;
+}
+
+#clearAllBtn:hover:not(:disabled) {
+  background: #cc4a4a;
+}
+
+/* ========== 空状态 ========== */
 .empty-state {
   text-align: center;
   padding: 40px;
@@ -141,6 +157,7 @@ h1 {
   font-size: 14px;
 }
 
+/* ========== 番剧卡片 ========== */
 .anime-list {
   display: flex;
   flex-direction: column;
@@ -154,6 +171,7 @@ h1 {
   background: #fafafa;
   transition: box-shadow 0.2s;
 }
+
 .anime-card:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
@@ -177,7 +195,6 @@ h1 {
   border: 1px solid #d9d9d9;
   border-radius: 4px;
   font-size: 14px;
-  font-weight: bold;
 }
 
 .subtitle-input {
@@ -185,37 +202,45 @@ h1 {
   padding: 6px 10px;
   border: 1px solid #d9d9d9;
   border-radius: 4px;
-  font-size: 13px;
-  color: #666;
+  font-size: 14px;
 }
 
-.preview-btn {
-  background: #13c2c2;
+/* 番剧卡片内的按钮 */
+.anime-header .preview-btn {
+  background: #5a6fd6;
   color: white;
-  border: none;
-  border-radius: 4px;
   padding: 4px 12px;
+  font-size: 13px;
   cursor: pointer;
-  font-size: 12px;
-}
-.preview-btn:hover {
-  background: #08979c;
-}
-
-.delete-btn {
-  background: #ff4d4f;
-  color: white;
   border: none;
   border-radius: 4px;
+  transition: all 0.2s;
+  font-family: 'Microsoft YaHei', sans-serif;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.anime-header .preview-btn:hover {
+  background: #4a5fc6;
+}
+
+.anime-header .delete-btn {
+  background: #e06060;
+  color: white;
   width: 28px;
   height: 28px;
-  cursor: pointer;
+  padding: 0;
   font-size: 16px;
   line-height: 28px;
   text-align: center;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  transition: all 0.2s;
 }
-.delete-btn:hover {
-  background: #cf1322;
+
+.anime-header .delete-btn:hover {
+  background: #cc4a4a;
 }
 
 .anime-info {
@@ -227,6 +252,28 @@ h1 {
   color: #888;
 }
 
+.anime-detail {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: #888;
+  line-height: 1.5;
+}
+
+.detail-label {
+  color: #5a6fd6;
+  font-weight: bold;
+  white-space: nowrap;
+  min-width: 40px;
+}
+
+.detail-text {
+  white-space: pre-line;
+  color: #666;
+}
+
 .tags {
   display: flex;
   gap: 4px;
@@ -234,18 +281,19 @@ h1 {
 }
 
 .tag {
-  background: #f0f5ff;
-  border: 1px solid #adc6ff;
+  background: #eef0fb;
+  border: 1px solid #cdd2f0;
   border-radius: 3px;
   padding: 1px 6px;
   font-size: 11px;
-  color: #1d39c4;
+  color: #5a6fd6;
 }
 
 .broadcast {
   color: #999;
 }
 
+/* ========== 视觉图选择 ========== */
 .visual-select {
   display: flex;
   gap: 8px;
@@ -263,19 +311,15 @@ h1 {
 }
 
 .select-visual-btn {
-  background: #2f54eb;
+  background: #5a6fd6;
   color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 4px 10px;
-  cursor: pointer;
-  font-size: 12px;
-  white-space: nowrap;
-}
-.select-visual-btn:hover {
-  background: #1d39c4;
 }
 
+.select-visual-btn:hover {
+  background: #4a5fc6;
+}
+
+/* ========== 评论区 ========== */
 .comments-section {
   border-top: 1px solid #e8e8e8;
   padding-top: 10px;
@@ -283,24 +327,42 @@ h1 {
 
 .comments-header {
   display: flex;
-  justify-content: space-between;
+  gap: 6px;
   align-items: center;
   margin-bottom: 8px;
   font-size: 13px;
   color: #555;
+  flex-wrap: wrap;
+}
+
+.comments-header span {
+  margin-right: auto;
+  font-weight: bold;
 }
 
 .add-comment-btn {
   background: #52c41a;
   color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 3px 10px;
-  cursor: pointer;
-  font-size: 12px;
 }
+
 .add-comment-btn:hover {
-  background: #389e0d;
+  background: #45a518;
+}
+
+.add-default-comment-btn {
+  background: #5a6fd6;
+  color: white;
+}
+
+.add-default-comment-btn:hover:not(:disabled) {
+  background: #4a5fc6;
+}
+
+.add-default-comment-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #c0c0c0;
+  color: #888;
 }
 
 .comment-item {
@@ -321,7 +383,7 @@ h1 {
 
 .comment-name {
   flex: 1;
-  min-width: 100px;
+  min-width: 40px;
   padding: 4px 8px;
   border: 1px solid #d9d9d9;
   border-radius: 4px;
@@ -342,33 +404,44 @@ h1 {
 }
 
 .select-avatar-btn {
-  background: #13c2c2;
+  background: #5a6fd6;
   color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 3px 8px;
-  cursor: pointer;
-  font-size: 11px;
 }
+
 .select-avatar-btn:hover {
-  background: #08979c;
+  background: #4a5fc6;
+}
+
+.add-comment-image-btn {
+  background: #eb9e4a;
+  color: white;
+}
+
+.add-comment-image-btn:hover {
+  background: #d88a3a;
 }
 
 .delete-comment-btn {
-  background: #ff4d4f;
+  background: #e06060;
   color: white;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 16px;
+  line-height: 28px;
+  text-align: center;
+  cursor: pointer;
   border: none;
   border-radius: 4px;
-  width: 22px;
-  height: 22px;
-  cursor: pointer;
-  font-size: 14px;
-  line-height: 22px;
-  text-align: center;
+  transition: all 0.2s;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
 .delete-comment-btn:hover {
-  background: #cf1322;
+  background: #cc4a4a;
 }
 
 .comment-text {
@@ -383,28 +456,93 @@ h1 {
   box-sizing: border-box;
 }
 
+/* ========== 评论图片 ========== */
+.comment-images {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.comment-image-item {
+  position: relative;
+  display: inline-block;
+}
+
+.comment-image-thumb {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid #e8e8e8;
+  transition: opacity 0.2s;
+}
+
+.comment-image-thumb:hover {
+  opacity: 0.8;
+}
+
+.remove-comment-image-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  background: #e06060;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
+  display: none;
+}
+
+.comment-image-item:hover .remove-comment-image-btn {
+  display: block;
+}
+
+/* ========== 日志区 ========== */
 #logContainer {
   height: 60px;
   background: #1a1a2e;
   color: #00ff88;
   padding: 8px 20px;
   overflow: hidden;
+  position: relative;
 }
 
-#log {
-  height: 100%;
-  overflow-y: auto;
-  font-family: 'Consolas', monospace;
-  font-size: 12px;
-  line-height: 1.6;
+#logResizeHandle {
+  position: absolute;
+  top: -4px;
+  left: 0;
+  right: 0;
+  height: 8px;
+  cursor: row-resize;
+  z-index: 10;
 }
 
-#log div {
-  margin: 0;
-  padding: 0;
-  border: none;
+#logResizeHandle::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 1px;
 }
 
+#logResizeHandle:hover::after {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+/* ========== 预览区 ========== */
 .preview-placeholder,
 .preview-loading,
 .preview-error {
@@ -421,11 +559,11 @@ h1 {
 }
 
 .preview-loading {
-  color: #1890ff;
+  color: #5a6fd6;
 }
 
 .preview-error {
-  color: #ff4d4f;
+  color: #e06060;
   padding: 20px;
   text-align: center;
 }
@@ -434,8 +572,10 @@ h1 {
   cursor: pointer;
   width: 16px;
   height: 16px;
+  accent-color: #5a6fd6;
 }
 
+/* ========== 滚动条 ========== */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -452,4 +592,64 @@ h1 {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #a1a1a1;
+}
+
+/* ========== 默认评论者设置栏 ========== */
+.default-commenter-bar {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  background: #f6f8fa;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+}
+
+.default-commenter {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.dc-label {
+  font-size: 13px;
+  color: #555;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.dc-name {
+  flex: 1;
+  min-width: 120px;
+  padding: 5px 8px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.dc-avatar-path {
+  font-size: 11px;
+  color: #999;
+  flex: 1;
+  min-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dc-select-avatar {
+  background: #5a6fd6;
+  color: white;
+}
+
+.dc-select-avatar:hover {
+  background: #4a5fc6;
+}
+
+.dc-clear {
+  background: #e06060;
+  color: white;
+}
+
+.dc-clear:hover {
+  background: #cc4a4a;
 }

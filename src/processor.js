@@ -14,17 +14,17 @@ function getFontDir() {
   // 开发环境
   const devFontDir = path.join(__dirname, 'fonts');
   if (fs.existsSync(devFontDir)) return devFontDir;
-  
+
   // 打包环境
   const prodFontDir = path.join(process.resourcesPath, 'fonts');
   if (fs.existsSync(prodFontDir)) return prodFontDir;
-  
+
   return devFontDir;
 }
 
 export async function processAnimePreview(config, logCallback) {
   const { data, outputDir } = config;
-  
+
   await fs.ensureDir(outputDir);
   const assetsDir = path.join(outputDir, 'assets');
   await fs.ensureDir(assetsDir);
@@ -52,7 +52,7 @@ async function prepareAssets(data, assetsDir, logCallback) {
   const avatarDir = path.join(assetsDir, 'avatar');
   const visualDir = path.join(assetsDir, 'visual');
   const fontDir = path.join(assetsDir, 'fonts');
-  
+
   await fs.ensureDir(avatarDir);
   await fs.ensureDir(visualDir);
   await fs.ensureDir(fontDir);

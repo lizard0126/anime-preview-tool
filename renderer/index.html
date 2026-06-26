@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="zh">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>新番导视编辑器</title>
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
   <div class="app">
     <!-- 左侧编辑区 -->
@@ -18,11 +20,15 @@
           <input type="text" id="seasonInput" value="202607" placeholder="季度代码，如 202607">
           <button id="fetchBtn">从 yuc.wiki 抓取</button>
         </div>
-        <button id="addAnimeBtn">+ 添加番剧</button>
+        <button id="addAnimeBtn">+ 添加动画</button>
         <button id="loadJsonBtn">导入 JSON</button>
         <button id="saveJsonBtn">导出 JSON</button>
         <button id="exportBtn">导出图片</button>
+        <button id="clearAllBtn" class="danger-btn">清除全部</button>
       </div>
+
+      <!-- 默认评论者设置 -->
+      <div id="defaultCommenterContainer" class="default-commenter-bar"></div>
 
       <!-- 番剧列表 -->
       <div id="animeList" class="anime-list"></div>
@@ -31,16 +37,18 @@
     <!-- 右侧预览区 -->
     <div class="preview-panel">
       <div id="previewContainer">
-        <div class="preview-placeholder">点击番剧标题可预览效果</div>
+        <div class="preview-placeholder">点击预览可查看生成效果</div>
       </div>
     </div>
   </div>
 
   <!-- 日志区 -->
   <div id="logContainer">
+    <div id="logResizeHandle"></div> <!-- 添加调整手柄 -->
     <div id="log"></div>
   </div>
 
   <script src="./renderer.js"></script>
 </body>
+
 </html>
