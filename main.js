@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, Menu, shell } from 'electron';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import fs from 'fs-extra';
@@ -59,6 +59,79 @@ function createWindow() {
     },
     icon: path.join(__dirname, 'assets', 'icon.ico')
   });
+
+  // 创建菜单
+  const menuTemplate = [
+    {
+      label: '文件',
+      submenu: [
+        { role: 'quit', label: '退出' }
+      ]
+    },
+    {
+      label: '编辑',
+      submenu: [
+        { role: 'undo', label: '撤销' },
+        { role: 'redo', label: '重做' },
+        { type: 'separator' },
+        { role: 'cut', label: '剪切' },
+        { role: 'copy', label: '复制' },
+        { role: 'paste', label: '粘贴' }
+      ]
+    },
+    {
+      label: '视图',
+      submenu: [
+        { role: 'reload', label: '刷新' },
+        { role: 'toggleDevTools', label: '开发者工具' },
+        { type: 'separator' },
+        { role: 'zoomIn', label: '放大' },
+        { role: 'zoomOut', label: '缩小' },
+        { role: 'resetZoom', label: '重置缩放' }
+      ]
+    },
+    {
+      label: '帮助',
+      submenu: [
+        {
+          label: '使用说明',
+          click: async () => {
+            // 在打包后，extraResources 会放在 process.resourcesPath 目录下
+            const readmePath = path.join(process.resourcesPath, 'README.md');
+            if (fs.existsSync(readmePath)) {
+              shell.openPath(readmePath);
+            } else {
+              // 开发环境回退到项目根目录
+              const devReadmePath = path.join(__dirname, 'README.md');
+              if (fs.existsSync(devReadmePath)) {
+                shell.openPath(devReadmePath);
+              } else {
+                dialog.showMessageBox(mainWindow, {
+                  type: 'info',
+                  title: '提示',
+                  message: 'README.md 文件不存在'
+                });
+              }
+            }
+          }
+        },
+        {
+          label: '关于',
+          click: () => {
+            dialog.showMessageBox(mainWindow, {
+              type: 'info',
+              title: '关于',
+              message: '天央动漫社 · 新番导视图片生成工具',
+              detail: `版本: ${app.getVersion()}\n作者: 蜥蜴\n\n一个专为天央动漫社节操部新番导视活动打造的自动化配图工具。`
+            });
+          }
+        }
+      ]
+    }
+  ];
+
+  const menu = Menu.buildFromTemplate(menuTemplate);
+  Menu.setApplicationMenu(menu);
 
   // 设置 Content-Security-Policy
   mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
