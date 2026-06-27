@@ -36,9 +36,28 @@ function initEventListeners() {
     try {
       const result = await window.electronAPI.fetchAnimeList(season);
       if (result.success) {
-        projectData.animes = result.data;
+        // 保存现有评论（按标题映射）
+        const existingComments = new Map();
+        projectData.animes.forEach(anime => {
+          if (anime.title && anime.comments?.length) {
+            existingComments.set(anime.title, anime.comments);
+          }
+        });
+
+        // 将评论合并到新数据中
+        const newAnimes = result.data.map(anime => {
+          const comments = existingComments.get(anime.title);
+          if (comments) {
+            return { ...anime, comments };
+          }
+          return anime;
+        });
+
+        projectData.animes = newAnimes;
         renderAnimeList();
-        logDiv.innerHTML += `<div style="color:green;">✅ 成功加载 ${result.data.length} 部动画</div>`;
+        logDiv.innerHTML +=
+          `<div style="color:green;">✅ 成功加载 ${result.data.length} 部动画` +
+          `（已保留 ${existingComments.size} 部动画的评论）</div>`;
       } else {
         logDiv.innerHTML += `<div style="color:red;">❌ 抓取失败: ${escapeHtml(result.error || '未知错误')}</div>`;
       }
@@ -54,17 +73,88 @@ function initEventListeners() {
 
   document.getElementById('loadJsonBtn').addEventListener('click', async () => {
     try {
-      const files = await window.electronAPI.selectFile({ properties: ['openFile'], filters: [{ name: 'JSON 文件', extensions: ['json'] }] });
-      if (files?.length) {
-        const result = await window.electronAPI.loadJson(files[0]);
-        if (result.success) {
-          projectData = result.data;
-          renderAnimeList();
-          document.getElementById('log').innerHTML += `<div style="color:green;">✅ 导入 JSON 成功</div>`;
-        } else {
-          document.getElementById('log').innerHTML += `<div style="color:red;">❌ 导入失败: ${escapeHtml(result.error)}</div>`;
-        }
+      const files = await window.electronAPI.selectFile({
+        properties: ['openFile'],
+        filters: [{ name: 'JSON 文件', extensions: ['json'] }]
+      });
+      if (!files?.length) return;
+
+      const result = await window.electronAPI.loadJson(files[0]);
+      if (!result.success) {
+        document.getElementById('log').innerHTML += `<div style="color:red;">❌ 导入失败: ${escapeHtml(result.error)}</div>`;
+        return;
       }
+
+      const importedData = result.data;
+      const importedAnimes = importedData.animes || [];
+
+      if (!importedAnimes.length) {
+        document.getElementById('log').innerHTML += `<div style="color:orange;">⚠️ JSON 中没有动画数据</div>`;
+        return;
+      }
+
+      // 确认导入模式
+      const mode = confirm(
+        `JSON 中包含 ${importedAnimes.length} 部动画。\n\n` +
+        `点击"确定" - 合并评论（按标题匹配，保留本地数据）\n` +
+        `点击"取消" - 替换全部数据`
+      );
+
+      if (mode) {
+        // 合并评论模式
+        // 构建标题 → 动画的映射（本地数据）
+        const localMap = new Map();
+        projectData.animes.forEach(anime => {
+          if (anime.title) localMap.set(anime.title, anime);
+        });
+
+        let matchedCount = 0;
+        let unmatchedCount = 0;
+        let totalCommentsAdded = 0;
+
+        for (const importedAnime of importedAnimes) {
+          if (!importedAnime.title) continue;
+
+          const localAnime = localMap.get(importedAnime.title);
+
+          if (localAnime) {
+            // 找到了匹配的本地动画，合并评论
+            if (!localAnime.comments) localAnime.comments = [];
+
+            const importedComments = importedAnime.comments || [];
+            for (const comment of importedComments) {
+              // 根据评论昵称去重，避免重复导入同一个人的评论
+              const existingNames = new Set(localAnime.comments.map(c => c.name));
+              if (comment.name && !existingNames.has(comment.name)) {
+                localAnime.comments.push({
+                  name: comment.name || '',
+                  avatar: comment.avatar || '',
+                  text: comment.text || '',
+                  medal: comment.medal || '',
+                  images: comment.images || []
+                });
+                totalCommentsAdded++;
+              }
+            }
+            matchedCount++;
+          } else {
+            // 没有匹配的本地动画
+            unmatchedCount++;
+          }
+        }
+
+        document.getElementById('log').innerHTML +=
+          `<div style="color:green;">✅ 评论合并完成：匹配 ${matchedCount} 部动画，` +
+          `新增 ${totalCommentsAdded} 条评论` +
+          `${unmatchedCount > 0 ? `，${unmatchedCount} 部未匹配（标题不一致）` : ''}</div>`;
+      } else {
+        // 替换模式 - 完全替换数据
+        projectData = importedData;
+        document.getElementById('log').innerHTML +=
+          `<div style="color:green;">✅ 已替换为 JSON 数据，共 ${importedAnimes.length} 部动画</div>`;
+      }
+
+      renderAnimeList();
     } catch (err) {
       document.getElementById('log').innerHTML += `<div style="color:red;">❌ 导入异常: ${escapeHtml(err.message)}</div>`;
     }
@@ -72,17 +162,41 @@ function initEventListeners() {
 
   document.getElementById('saveJsonBtn').addEventListener('click', async () => {
     try {
-      const dir = await window.electronAPI.selectDirectory();
-      if (dir) {
-        const result = await window.electronAPI.saveJson(projectData, dir);
-        if (result.success) {
-          document.getElementById('log').innerHTML += `<div style="color:green;">✅ JSON 已保存到 ${escapeHtml(dir)}</div>`;
-        } else {
-          document.getElementById('log').innerHTML += `<div style="color:red;">❌ 保存失败: ${escapeHtml(result.error)}</div>`;
-        }
+      // 弹出保存文件对话框，让用户指定文件名
+      const filePath = await window.electronAPI.saveFileDialog({
+        title: '导出评论数据',
+        defaultPath: `评论数据_${new Date().toISOString().slice(0, 10)}.json`,
+        filters: [{ name: 'JSON 文件', extensions: ['json'] }]
+      });
+
+      if (!filePath) return;
+
+      // 只导出需要的数据（标题 + 评论），减小文件体积
+      const exportData = {
+        title: projectData.title || '新番速递',
+        animes: projectData.animes.map(anime => ({
+          title: anime.title,
+          subtitle: anime.subtitle,
+          comments: (anime.comments || []).map(c => ({
+            name: c.name,
+            avatar: c.avatar,
+            text: c.text,
+            medal: c.medal,
+            images: c.images || []
+          }))
+        }))
+      };
+
+      const result = await window.electronAPI.saveJson(exportData, filePath);
+      if (result.success) {
+        const fileName = filePath.split(/[/\\]/).pop();
+        document.getElementById('log').innerHTML +=
+          `<div style="color:green;">✅ 评论数据已导出：${escapeHtml(fileName)}</div>`;
+      } else {
+        document.getElementById('log').innerHTML += `<div style="color:red;">❌ 导出失败: ${escapeHtml(result.error)}</div>`;
       }
     } catch (err) {
-      document.getElementById('log').innerHTML += `<div style="color:red;">❌ 保存异常: ${escapeHtml(err.message)}</div>`;
+      document.getElementById('log').innerHTML += `<div style="color:red;">❌ 导出异常: ${escapeHtml(err.message)}</div>`;
     }
   });
 
@@ -225,7 +339,14 @@ function renderAnimeList() {
   container.innerHTML = '';
 
   if (!projectData.animes?.length) {
-    container.innerHTML = '<div class="empty-state">暂无番剧数据，请点击"从 yuc.wiki 抓取"或"添加番剧"</div>';
+    container.innerHTML = `
+      <div class="empty-state">
+        <div>1、点击工具栏"从 yuc.wiki 抓取"获取番剧列表，或点击"添加动画"手动添加</div>
+        <div>2、输入默认评论昵称并选择头像</div>
+        <div>3、在对应动画条目点击添加评论</div>
+        <div>4、导入或导出评论</div>
+      </div>
+    `;
     return;
   }
 
@@ -275,7 +396,7 @@ function renderAnimeList() {
                   <option value="黑牌" ${c.medal === '黑牌' ? 'selected' : ''}>黑牌</option>
                 </select>
                 <span class="avatar-path">${c.avatar ? '已选择头像' : '未选择头像'}</span>
-                <button class="select-avatar-btn" data-anime="${index}" data-comment="${ci}">头像</button>
+                <button class="select-avatar-btn" data-anime="${index}" data-comment="${ci}">选择头像</button>
                 <button class="add-comment-image-btn" data-anime="${index}" data-comment="${ci}" title="插入图片">插入图片</button>
                 <button class="delete-comment-btn" data-anime="${index}" data-comment="${ci}">×</button>
               </div>

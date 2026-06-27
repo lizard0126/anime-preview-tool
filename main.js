@@ -96,6 +96,12 @@ ipcMain.handle('dialog:openDirectory', async () => {
   return result.filePaths[0] || '';
 });
 
+// 保存文件对话框
+ipcMain.handle('dialog:saveFile', async (event, options) => {
+  const result = await dialog.showSaveDialog(mainWindow, options || {});
+  return result.filePath || '';
+});
+
 // 加载 JSON
 ipcMain.handle('json:load', async (event, filePath) => {
   try {
@@ -106,11 +112,11 @@ ipcMain.handle('json:load', async (event, filePath) => {
   }
 });
 
-// 保存 JSON
-ipcMain.handle('json:save', async (event, data, dir) => {
+// 保存 JSON（支持指定文件路径）
+ipcMain.handle('json:save', async (event, data, filePath) => {
   try {
-    await fs.ensureDir(dir);
-    await fs.writeJson(path.join(dir, 'project.json'), data, { spaces: 2 });
+    await fs.ensureDir(path.dirname(filePath));
+    await fs.writeJson(filePath, data, { spaces: 2 });
     return { success: true };
   } catch (err) {
     return { success: false, error: err.message };
