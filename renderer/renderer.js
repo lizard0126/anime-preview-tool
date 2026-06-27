@@ -115,6 +115,32 @@ function initEventListeners() {
     }
   });
 
+  // 全选/取消全选
+  document.getElementById('toggleSelectAllBtn').addEventListener('click', () => {
+    const animes = projectData.animes;
+    if (!animes?.length) {
+      document.getElementById('log').innerHTML += `<div style="color:orange;">⚠️ 没有动画可选择</div>`;
+      return;
+    }
+
+    // 检查当前是否全部选中
+    const allSelected = animes.every(a => a.selected !== false);
+
+    // 如果全部选中则取消全选，否则全选
+    const newState = !allSelected;
+    animes.forEach(anime => {
+      anime.selected = newState;
+    });
+
+    // 更新按钮文字
+    document.getElementById('toggleSelectAllBtn').textContent = newState ? '取消全选' : '全选';
+
+    // 重新渲染列表
+    renderAnimeList();
+
+    document.getElementById('log').innerHTML += `<div style="color:green;">✅ 已${newState ? '全选' : '取消全选'}所有动画</div>`;
+  });
+
   window.addEventListener('beforeunload', () => {
     window.electronAPI.removeAllListeners?.('log');
   });
@@ -270,6 +296,7 @@ function renderAnimeList() {
   });
 
   bindAnimeEvents();
+  updateToggleSelectBtnText();
 }
 
 // 从文本中提取图片标记
@@ -281,7 +308,11 @@ function extractImageFromText(text) {
 function bindAnimeEvents() {
   document.querySelectorAll('.anime-select').forEach(cb => {
     cb.addEventListener('change', e => {
-      projectData.animes[parseInt(e.target.dataset.index)].selected = e.target.checked;
+      const index = parseInt(e.target.dataset.index);
+      projectData.animes[index].selected = e.target.checked;
+
+      // 同步更新全选按钮文字
+      updateToggleSelectBtnText();
     });
   });
 
@@ -434,6 +465,21 @@ function bindAnimeEvents() {
       }
     });
   });
+}
+
+// 更新全选/取消全选按钮文字
+function updateToggleSelectBtnText() {
+  const btn = document.getElementById('toggleSelectAllBtn');
+  if (!btn) return;
+
+  const animes = projectData.animes;
+  if (!animes?.length) {
+    btn.textContent = '全选';
+    return;
+  }
+
+  const allSelected = animes.every(a => a.selected !== false);
+  btn.textContent = allSelected ? '取消全选' : '全选';
 }
 
 async function previewAnime(index) {

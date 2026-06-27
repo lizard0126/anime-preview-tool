@@ -149,6 +149,15 @@ h1 {
   background: #cc4a4a;
 }
 
+#toggleSelectAllBtn {
+  background: #5a6fd6;
+  color: white;
+}
+
+#toggleSelectAllBtn:hover:not(:disabled) {
+  background: #4a5fc6;
+}
+
 /* ========== 空状态 ========== */
 .empty-state {
   text-align: center;
@@ -514,6 +523,36 @@ h1 {
   padding: 8px 20px;
   overflow: hidden;
   position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+#log {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  font-family: 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  scroll-behavior: smooth;
+  padding-right: 4px;
+}
+
+#log::-webkit-scrollbar {
+  width: 6px;
+}
+
+#log::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#log::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+#log::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
 }
 
 #logResizeHandle {

@@ -13,18 +13,10 @@ app.whenReady().then(() => {
 });
 
 // 获取字体目录（兼容开发环境和打包环境）
-// 获取字体目录（兼容开发环境和打包环境）
 function getFontDir() {
-  console.log('=== 字体目录查找 ===');
-  console.log('app.isPackaged:', app.isPackaged);
-  console.log('process.resourcesPath:', process.resourcesPath);
-  console.log('__dirname:', __dirname);
-
   // 开发环境
   const devFontDir = path.join(__dirname, 'src', 'fonts');
-  console.log('开发路径:', devFontDir, '存在:', fs.existsSync(devFontDir));
   if (fs.existsSync(devFontDir)) {
-    console.log('使用开发路径');
     return devFontDir;
   }
 
@@ -37,25 +29,20 @@ function getFontDir() {
     path.join(process.cwd(), 'src', 'fonts')
   ];
 
-  console.log('检查可能的打包路径:');
   for (const p of possiblePaths) {
-    console.log('  ', p, '存在:', fs.existsSync(p));
     if (fs.existsSync(p)) {
-      console.log('使用路径:', p);
       return p;
     }
   }
 
   // 如果都不存在，列出 resourcesPath 内容
   try {
-    console.log('resourcesPath 内容:');
     const items = fs.readdirSync(process.resourcesPath);
     items.forEach(item => console.log('  ', item));
   } catch (e) {
-    console.log('无法读取 resourcesPath:', e.message);
+    console.log(e.message);
   }
 
-  console.log('返回默认路径:', devFontDir);
   return devFontDir;
 }
 
@@ -179,23 +166,15 @@ ipcMain.handle('process:preview', async (event, previewData) => {
 
     // 复制字体文件到临时目录 - 使用 getFontDir()
     const srcFontDir = getFontDir();
-    console.log('预览字体源目录:', srcFontDir);
-    console.log('预览字体目录是否存在:', await fs.pathExists(srcFontDir));
 
     if (await fs.pathExists(srcFontDir)) {
       const fontFiles = await fs.readdir(srcFontDir);
-      console.log('预览发现的字体文件:', fontFiles);
       for (const fontFile of fontFiles) {
         const srcPath = path.join(srcFontDir, fontFile);
         if (['.ttf', '.otf', '.woff', '.woff2'].includes(path.extname(fontFile))) {
           await fs.copy(srcPath, path.join(fontDir, fontFile));
-          console.log('预览复制字体:', fontFile);
         }
       }
-    } else {
-      console.log('预览字体目录不存在!');
-      console.log('process.resourcesPath:', process.resourcesPath);
-      console.log('__dirname:', __dirname);
     }
 
     // 深拷贝并处理预览数据
@@ -331,26 +310,18 @@ async function embedResources(htmlContent, baseDir) {
 ipcMain.handle('file:readAllFonts', async () => {
   try {
     const fontDir = getFontDir();
-    console.log('字体目录路径:', fontDir);
-    console.log('字体目录是否存在:', await fs.pathExists(fontDir));
 
     const fonts = {};
     if (await fs.pathExists(fontDir)) {
       const files = await fs.readdir(fontDir);
-      console.log('字体文件列表:', files);
 
       for (const file of files) {
         if (['.ttf', '.otf', '.woff', '.woff2'].includes(path.extname(file))) {
           const filePath = path.join(fontDir, file);
           const buffer = await fs.readFile(filePath);
           fonts[file] = buffer.toString('base64');
-          console.log(`已读取字体: ${file} (${buffer.length} 字节)`);
         }
       }
-    } else {
-      console.log('字体目录不存在!');
-      console.log('process.resourcesPath:', process.resourcesPath);
-      console.log('__dirname:', __dirname);
     }
 
     return { success: true, fonts };
